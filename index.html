@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>リアルアイディア投票</title>
+  <title>未来アイディア投票</title>
   <style>
     :root {
       --panel: rgba(255, 255, 255, 0.92);
       --line: #111111;
       --muted: #666666;
       --red: #d71920;
+      --red2: #ef3340;
       --red-soft: rgba(215, 25, 32, 0.08);
       --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
       --radius: 22px;
@@ -105,7 +106,7 @@
 
     .admin-panel {
       display: grid;
-      grid-template-columns: 1.4fr 0.8fr auto auto;
+      grid-template-columns: 1.4fr 0.8fr auto;
       gap: 12px;
       align-items: end;
       background: var(--panel);
@@ -143,14 +144,12 @@
     }
 
     .primary-btn,
-    .secondary-btn,
     .vote-btn {
       cursor: pointer;
-      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, opacity 0.14s ease;
     }
 
-    .primary-btn,
-    .secondary-btn {
+    .primary-btn {
       height: 48px;
       padding: 0 18px;
       border-radius: 14px;
@@ -162,15 +161,7 @@
       white-space: nowrap;
     }
 
-    .primary-btn {
-      background: var(--red);
-      color: #fff;
-      border-color: var(--red);
-      box-shadow: 0 8px 22px rgba(215, 25, 32, 0.22);
-    }
-
     .primary-btn:hover,
-    .secondary-btn:hover,
     .vote-btn:hover {
       transform: translateY(-1px);
     }
@@ -254,15 +245,22 @@
       font-weight: 800;
       border: 2px solid var(--line);
       border-radius: 16px;
-      background: #fff;
-      color: var(--line);
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+      background: linear-gradient(135deg, var(--red) 0%, var(--red2) 100%);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(215, 25, 32, 0.22);
       position: relative;
       z-index: 1;
     }
 
     .vote-btn:active {
       transform: scale(0.98);
+    }
+
+    .vote-btn:disabled,
+    .primary-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      transform: none;
     }
 
     .count-wrap {
@@ -346,7 +344,6 @@
         <input id="ideaCount" type="number" min="1" max="20" value="1" />
       </div>
       <button id="addIdeas" class="primary-btn" type="button">まとめて追加</button>
-      <button id="reset" class="secondary-btn" type="button">票数だけリセット</button>
     </section>
 
     <section class="summary">
@@ -381,8 +378,7 @@
       serverTimestamp,
       writeBatch,
       getDocs,
-      doc as firestoreDoc,
-      setDoc
+      doc as firestoreDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -402,7 +398,6 @@
     const presenterNameInput = document.getElementById("presenterName");
     const ideaCountInput = document.getElementById("ideaCount");
     const addIdeasBtn = document.getElementById("addIdeas");
-    const resetBtn = document.getElementById("reset");
     const ideaTotalEl = document.getElementById("ideaTotal");
     const voteTotalEl = document.getElementById("voteTotal");
     const topIdeaEl = document.getElementById("topIdea");
@@ -492,7 +487,9 @@
         voteBtn.className = "vote-btn";
         voteBtn.type = "button";
         voteBtn.textContent = "この案に投票";
+
         voteBtn.addEventListener("click", async () => {
+          voteBtn.disabled = true;
           try {
             await updateDoc(doc(db, "voteOptions", ideaDoc.id), {
               count: increment(1)
@@ -500,6 +497,8 @@
           } catch (error) {
             console.error(error);
             alert("投票に失敗しました。");
+          } finally {
+            voteBtn.disabled = false;
           }
         });
 
@@ -550,26 +549,6 @@
       if (event.key === "Enter") {
         event.preventDefault();
         addIdeas();
-      }
-    });
-
-    resetBtn.addEventListener("click", async () => {
-      if (!confirm("票数だけを0に戻します。よろしいですか？")) {
-        return;
-      }
-
-      try {
-        const snapshot = await getDocs(voteOptionsQuery);
-        const batch = writeBatch(db);
-
-        snapshot.forEach((item) => {
-          batch.update(item.ref, { count: 0 });
-        });
-
-        await batch.commit();
-      } catch (error) {
-        console.error(error);
-        alert("リセットに失敗しました。");
       }
     });
   </script>
