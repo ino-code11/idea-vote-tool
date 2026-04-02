@@ -3,51 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>リアルアイディア投票</title>
+  <title>未来アイディア投票</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --red: #d71920;
-      --red2: #ef3340;
-      --red-glow: rgba(215, 25, 32, 0.18);
-      --line: #111111;
-      --muted: #666666;
-      --panel: rgba(255,255,255,0.94);
-      --shadow: 0 8px 28px rgba(0,0,0,0.06);
-      --radius: 20px;
-      --font-display: 'Syne', sans-serif;
-      --font-body: 'Noto Sans JP', sans-serif;
+      --red:    #d71920;
+      --red2:   #ef3340;
+      --red-g:  linear-gradient(135deg, #d71920 0%, #ef3340 100%);
+      --red-soft: rgba(215,25,32,0.07);
+      --ink:    #111111;
+      --ink2:   #3a3a3a;
+      --muted:  #888888;
+      --border-admin:  #111111;   /* 操作系 — 太くはっきり */
+      --border-rank:   #d0d0cc;   /* 情報系 — 細くニュートラル */
+      --border-card:   #e2e2de;   /* 投票系 — 最も柔らかく */
+      --surface: #f5f5f3;
+      --white:   #ffffff;
+      --r-input: 12px;
+      --r-rank:  18px;
+      --r-card:  24px;
+      --font-d:  'Syne', sans-serif;
+      --font-b:  'Noto Sans JP', sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: var(--font-body);
-      color: var(--line);
-      background: #fafaf8;
+      font-family: var(--font-b);
+      color: var(--ink);
+      background: var(--surface);
       min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* grid bg */
+    /* subtle grid */
     body::before {
       content: "";
       position: fixed; inset: 0;
       background-image:
-        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
-      pointer-events: none;
-      z-index: 0;
+        linear-gradient(rgba(0,0,0,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.022) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── red glow blobs (like original) ── */
+    body::after {
+      content: "";
+      position: fixed;
+      top: -120px; right: -120px;
+      width: 480px; height: 480px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(215,25,32,0.10) 0%, transparent 68%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .blob-bottom {
+      position: fixed;
+      bottom: -160px; left: -100px;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(215,25,32,0.07) 0%, transparent 68%);
+      pointer-events: none; z-index: 0;
     }
 
     .wrap {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 28px 20px 56px;
-      position: relative;
-      z-index: 1;
+      padding: 32px 22px 72px;
+      position: relative; z-index: 1;
     }
 
     /* ── HERO ── */
@@ -56,876 +81,708 @@
       align-items: flex-end;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
-
-    .hero-text {}
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.78rem;
-      letter-spacing: 0.12em;
+      gap: 8px;
+      font-family: var(--font-d);
+      font-size: 0.74rem;
+      letter-spacing: 0.13em;
       text-transform: uppercase;
-      border: 1.5px solid var(--line);
-      border-radius: 999px;
-      padding: 5px 12px;
-      background: #fff;
+      color: var(--muted);
       margin-bottom: 10px;
-      font-family: var(--font-display);
     }
 
-    .eyebrow::before {
-      content: "";
-      display: inline-block;
+    .eyebrow-dot {
       width: 7px; height: 7px;
+      background: var(--red-g);
       background: var(--red);
       border-radius: 50%;
       animation: pulse 1.8s ease-in-out infinite;
     }
 
     @keyframes pulse {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.7); }
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(.62); }
     }
 
     h1 {
-      font-family: var(--font-display);
-      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-family: var(--font-d);
+      font-size: clamp(2rem, 4vw, 3rem);
       line-height: 1.02;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.025em;
     }
 
-    /* ── STATS BAR (compact) ── */
-    .stats-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+    /* ── STATS PILLS ── */
+    .stats-bar { display: flex; gap: 8px; align-items: center; }
 
     .stat-pill {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #fff;
-      border: 1.5px solid var(--line);
+      align-items: baseline;
+      gap: 5px;
+      background: var(--white);
+      border: 1px solid var(--border-card);
       border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 0.82rem;
-      font-weight: 700;
+      padding: 6px 16px;
       white-space: nowrap;
     }
 
-    .stat-pill .num {
-      font-family: var(--font-display);
-      font-size: 1rem;
+    .stat-num {
+      font-family: var(--font-d);
+      font-size: 1.1rem;
       font-weight: 800;
     }
 
-    .stat-pill .label {
-      color: var(--muted);
-      font-size: 0.76rem;
-      font-weight: 400;
-    }
+    .stat-label { font-size: 0.73rem; color: var(--muted); }
 
-    /* ── ADMIN PANEL ── */
+    /* ═══════════════════════════════════════
+       ADMIN PANEL — 操作系
+       太くシャープな枠線、左に赤ライン
+    ═══════════════════════════════════════ */
     .admin-panel {
       display: grid;
-      grid-template-columns: 1fr 1.4fr auto;
+      grid-template-columns: 1fr 1.6fr auto;
       gap: 10px;
       align-items: end;
-      background: var(--panel);
-      border: 2px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-      margin-bottom: 20px;
-      backdrop-filter: blur(8px);
+      background: var(--white);
+      border: 2px solid var(--border-admin);
+      border-radius: 20px;
+      border-left: 5px solid var(--red);
+      padding: 18px 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      margin-bottom: 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* red gradient shimmer top-right */
+    .admin-panel::after {
+      content: "";
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(215,25,32,0.09) 0%, transparent 70%);
+      pointer-events: none;
     }
 
     .field label {
       display: block;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 700;
-      margin-bottom: 6px;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.04em;
+      color: var(--ink2);
+      margin-bottom: 7px;
     }
 
     .field input {
       width: 100%;
       height: 44px;
-      border: 2px solid var(--line);
-      border-radius: 12px;
+      border: 2px solid #c8c8c4;
+      border-radius: var(--r-input);
       padding: 0 14px;
-      font-size: 0.96rem;
-      font-family: var(--font-body);
-      background: #fff;
+      font-size: 0.95rem;
+      font-family: var(--font-b);
+      background: var(--surface);
+      color: var(--ink);
       outline: none;
-      transition: box-shadow 0.15s;
+      transition: border-color .15s, box-shadow .15s, background .15s;
     }
 
     .field input:focus {
-      box-shadow: 0 0 0 4px var(--red-glow);
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px rgba(17,17,17,0.09);
+      background: var(--white);
+    }
+
+    .field input.error {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(215,25,32,0.12);
     }
 
     .primary-btn {
       height: 44px;
-      padding: 0 20px;
-      border-radius: 12px;
-      border: 2px solid var(--line);
-      font-size: 0.92rem;
+      padding: 0 22px;
+      border-radius: var(--r-input);
+      border: 2px solid var(--ink);
+      font-size: 0.9rem;
       font-weight: 700;
-      font-family: var(--font-body);
-      background: var(--line);
-      color: #fff;
+      font-family: var(--font-b);
+      background: var(--ink);
+      color: var(--white);
       cursor: pointer;
       white-space: nowrap;
-      transition: transform 0.12s, opacity 0.12s;
+      letter-spacing: .02em;
+      position: relative; z-index: 1;
+      transition: transform .12s, opacity .12s;
     }
 
-    .primary-btn:hover { transform: translateY(-1px); opacity: 0.88; }
-    .primary-btn:active { transform: scale(0.98); }
-    .primary-btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
+    .primary-btn:hover    { opacity:.8; transform:translateY(-1px); }
+    .primary-btn:active   { transform:scale(.98); }
+    .primary-btn:disabled { opacity:.4; cursor:wait; transform:none; }
 
     /* ── MAIN LAYOUT ── */
     .main-layout {
       display: grid;
-      grid-template-columns: 320px 1fr;
+      grid-template-columns: 300px 1fr;
       gap: 18px;
       align-items: start;
     }
 
-    /* ── RANKING CARD ── */
+    /* ═══════════════════════════════════════
+       RANKING CARD — 情報系
+       薄い枠線、上部に赤グラデーションバー
+    ═══════════════════════════════════════ */
     .ranking-card {
-      background: var(--panel);
-      border: 2px solid var(--line);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: var(--shadow);
+      background: var(--white);
+      border: 1px solid var(--border-rank);
+      border-radius: var(--r-rank);
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
       position: sticky;
-      top: 20px;
+      top: 22px;
     }
+
+    /* red gradient bar at top */
+    .ranking-top-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--red) 0%, var(--red2) 60%, rgba(239,51,64,0.18) 100%);
+    }
+
+    .ranking-inner { padding: 18px 18px 20px; }
 
     .ranking-header {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
       margin-bottom: 14px;
     }
 
-    .ranking-title {
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-    }
+    .ranking-title { font-family: var(--font-d); font-size: 0.95rem; font-weight: 800; }
+    .ranking-sub   { font-size: 0.72rem; color: var(--muted); }
 
-    .ranking-sub {
-      font-size: 0.74rem;
-      color: var(--muted);
-    }
-
-    /* ranking list */
-    #rankingList {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 60px;
-    }
+    #rankingList { display: flex; flex-direction: column; gap: 7px; }
 
     .ranking-item {
       display: grid;
-      grid-template-columns: 40px 1fr auto;
+      grid-template-columns: 36px 1fr auto;
       gap: 10px;
       align-items: center;
-      border: 1.5px solid #e8e8e4;
-      border-radius: 12px;
+      border: 1px solid #eaeae6;
+      border-radius: 10px;
       padding: 10px 12px;
-      background: #fff;
+      background: var(--white);
       position: relative;
       overflow: hidden;
     }
 
-    /* progress bar behind */
+    /* progress fill */
     .ranking-item::before {
       content: "";
       position: absolute;
       inset: 0 auto 0 0;
-      background: rgba(215,25,32,0.05);
+      background: rgba(17,17,17,0.04);
       width: var(--pct, 0%);
-      transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1);
+      transition: width .65s cubic-bezier(.34,1.56,.64,1);
       pointer-events: none;
     }
 
+    /* 1位: 赤グラデーション背景 */
     .ranking-item.is-top {
-      border-color: var(--red);
-      background: #fff8f8;
+      background: linear-gradient(135deg, #d71920 0%, #ef3340 100%);
+      border-color: transparent;
     }
 
-    .ranking-item.is-top::before {
-      background: rgba(215,25,32,0.08);
-    }
+    .ranking-item.is-top::before { background: rgba(255,255,255,0.1); }
 
     .ranking-rank {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 32px; height: 32px;
-      border: 1.5px solid #e0e0d8;
-      border-radius: 999px;
-      font-family: var(--font-display);
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid #d8d8d4;
+      font-family: var(--font-d);
       font-weight: 800;
-      font-size: 0.85rem;
-      background: #fff;
-      position: relative;
-      z-index: 1;
-      transition: background 0.3s, color 0.3s, border-color 0.3s;
+      font-size: 0.76rem;
+      color: var(--ink2);
+      background: var(--white);
+      flex-shrink: 0;
+      position: relative; z-index: 1;
     }
 
-    .is-top .ranking-rank {
-      background: var(--red);
-      color: #fff;
-      border-color: var(--red);
-    }
+    .is-top .ranking-rank { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.5); color: #fff; }
 
     .ranking-name {
+      font-size: 0.82rem;
       font-weight: 700;
-      font-size: 0.9rem;
       line-height: 1.35;
-      word-break: break-word;
-      position: relative;
-      z-index: 1;
+      word-break: break-all;
+      color: var(--ink);
+      position: relative; z-index: 1;
     }
+
+    .is-top .ranking-name { color: #fff; }
 
     .ranking-right {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       gap: 3px;
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
     }
 
     .ranking-votes {
-      font-family: var(--font-display);
+      font-family: var(--font-d);
       font-weight: 800;
-      font-size: 1rem;
+      font-size: 0.95rem;
+      color: var(--ink);
     }
 
-    /* ── RANK CHANGE BADGE ── */
+    .is-top .ranking-votes { color: #fff; }
+
     .rank-delta {
-      font-size: 0.68rem;
+      font-size: 0.64rem;
       font-weight: 700;
       padding: 2px 6px;
       border-radius: 999px;
-      line-height: 1;
-      white-space: nowrap;
     }
 
-    .rank-delta.up   { background: #e8f5e9; color: #2e7d32; }
-    .rank-delta.down { background: #fff3e0; color: #e65100; }
-    .rank-delta.new  { background: #e3f2fd; color: #1565c0; }
-    .rank-delta.same { background: #f5f5f5; color: #888; }
+    .rank-delta.up   { background:#e8f5e9; color:#2e7d32; }
+    .rank-delta.down { background:#fce4e4; color:#b71c1c; }
+    .rank-delta.new  { background:#ececec; color:#555; }
+    .rank-delta.same { background:#f2f2f2; color:#999; }
 
-    /* item animation on rank change */
-    @keyframes rankBump {
-      0%   { transform: translateX(-6px); opacity: 0.6; }
-      60%  { transform: translateX(3px); }
-      100% { transform: translateX(0);   opacity: 1; }
+    @keyframes rankSlide {
+      from { opacity:.4; transform:translateX(-10px); }
+      to   { opacity:1;  transform:translateX(0); }
     }
-
-    .ranking-item.animate {
-      animation: rankBump 0.42s cubic-bezier(0.34,1.56,0.64,1);
-    }
+    .ranking-item.animate { animation: rankSlide .38s cubic-bezier(.34,1.56,.64,1); }
 
     @keyframes voteFlash {
-      0%  { background: rgba(215,25,32,0.18); }
-      100%{ background: transparent; }
+      0%   { box-shadow: inset 0 0 0 2px var(--red); }
+      100% { box-shadow: none; }
     }
+    .ranking-item.flash:not(.is-top) { animation: voteFlash .6s ease-out forwards; }
 
-    .ranking-item.flash {
-      animation: voteFlash 0.6s ease-out forwards;
-    }
+    .ranking-empty { color:var(--muted); font-size:.88rem; padding:14px 0; text-align:center; }
 
-    .ranking-empty {
-      color: var(--muted);
-      font-size: 0.9rem;
-      padding: 12px 0;
-      text-align: center;
-    }
-
-    /* ── IDEA CARDS ── */
+    /* ═══════════════════════════════════════
+       IDEA CARDS — 投票系
+       最も丸く柔らかい枠線、ホバーで赤グラデ投票ボタン
+    ═══════════════════════════════════════ */
     #buttons {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(186px, 1fr));
       gap: 14px;
     }
 
     .idea-card {
-      background: var(--panel);
-      border: 2px solid var(--line);
-      border-radius: 20px;
+      background: var(--white);
+      border: 1px solid var(--border-card);
+      border-radius: var(--r-card);
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      min-height: 180px;
+      min-height: 178px;
       position: relative;
       overflow: hidden;
-      transition: transform 0.18s, box-shadow 0.18s;
+      transition: transform .16s, box-shadow .16s, border-color .2s;
+    }
+
+    /* subtle red glow in corner */
+    .idea-card::after {
+      content: "";
+      position: absolute;
+      bottom: -40px; right: -40px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(215,25,32,0.10) 0%, transparent 70%);
+      pointer-events: none;
+      transition: opacity .3s;
+      opacity: 0;
     }
 
     .idea-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.09);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.09);
+      border-color: #c8c8c4;
     }
 
-    .idea-card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-    }
+    .idea-card:hover::after { opacity: 1; }
+
+    .idea-card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
 
     .idea-presenter {
-      font-size: 0.72rem;
+      font-size: 0.69rem;
       font-weight: 700;
       color: var(--muted);
-      letter-spacing: 0.05em;
+      letter-spacing: .06em;
       text-transform: uppercase;
-      background: #f0f0ec;
+      background: var(--surface);
       border-radius: 999px;
       padding: 3px 10px;
+      border: 1px solid #e2e2de;
     }
 
+    .delete-btn {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 1px solid #e2e2de;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.68rem;
+      color: var(--muted);
+      display: flex; align-items:center; justify-content:center;
+      flex-shrink: 0;
+      transition: background .14s, border-color .14s, color .14s;
+    }
+
+    .delete-btn:hover { background:#fce4e4; border-color:var(--red); color:var(--red); }
+
     .idea-name {
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 900;
       line-height: 1.4;
       word-break: break-word;
+      flex: 1;
+      position: relative; z-index: 1;
     }
 
     .count-wrap {
-      margin-top: auto;
       display: flex;
       align-items: baseline;
       gap: 5px;
+      margin-top: auto;
+      position: relative; z-index: 1;
     }
 
     .count {
-      font-family: var(--font-display);
+      font-family: var(--font-d);
       font-size: 2.2rem;
       font-weight: 800;
       line-height: 1;
-      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
-    }
-
-    .count.bump {
-      animation: countBump 0.35s cubic-bezier(0.34,1.56,0.64,1);
     }
 
     @keyframes countBump {
-      0%  { transform: scale(1); }
-      50% { transform: scale(1.4); color: var(--red); }
-      100%{ transform: scale(1); }
+      0%   { transform:scale(1); }
+      45%  { transform:scale(1.4); color:var(--red); }
+      100% { transform:scale(1); color:var(--ink); }
     }
 
-    .count-label {
-      color: var(--muted);
-      font-size: 0.8rem;
-    }
+    .count.bump { animation: countBump .32s cubic-bezier(.34,1.56,.64,1); }
+
+    .count-label { font-size:.78rem; color:var(--muted); }
 
     .vote-btn {
       width: 100%;
-      padding: 13px 14px;
-      font-size: 1rem;
+      padding: 12px;
+      font-size: .9rem;
       font-weight: 700;
-      font-family: var(--font-body);
-      border: 2px solid var(--line);
+      font-family: var(--font-b);
+      border: 1.5px solid #d0d0cc;
       border-radius: 14px;
-      background: #fff;
-      color: var(--line);
+      background: var(--surface);
+      color: var(--ink);
       cursor: pointer;
-      transition: background 0.18s, color 0.18s, transform 0.12s, box-shadow 0.18s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 7px;
+      position: relative; z-index: 1;
+      transition: background .18s, border-color .18s, color .18s, transform .12s, box-shadow .18s;
     }
 
     .vote-btn:hover {
-      background: var(--line);
+      background: linear-gradient(135deg, var(--red) 0%, var(--red2) 100%);
+      border-color: transparent;
       color: #fff;
       transform: translateY(-1px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 8px 22px rgba(215,25,32,0.30);
     }
 
-    .vote-btn:active { transform: scale(0.98); }
-
-    .vote-btn:disabled {
-      opacity: 0.5;
-      cursor: wait;
-      transform: none;
-    }
-
-    /* voted state */
-    .vote-btn.voted {
-      background: linear-gradient(135deg, var(--red), var(--red2));
-      color: #fff;
-      border-color: var(--red);
-      box-shadow: 0 6px 18px rgba(215,25,32,0.28);
-      pointer-events: none;
-    }
-
-    .vote-btn .btn-icon {
-      font-size: 1rem;
-      transition: transform 0.2s;
-    }
-
-    .vote-btn:hover .btn-icon { transform: scale(1.2); }
-
-    /* card delete btn */
-    .delete-btn {
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      border: 1.5px solid #e0e0d8;
-      background: #fff;
-      cursor: pointer;
-      font-size: 0.78rem;
-      color: var(--muted);
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-      flex-shrink: 0;
-    }
-
-    .delete-btn:hover {
-      background: #fff0f0;
-      color: var(--red);
-      border-color: var(--red);
-    }
+    .vote-btn:active  { transform:scale(.98); }
+    .vote-btn:disabled{ opacity:.45; cursor:wait; transform:none; }
 
     /* ── RESPONSIVE ── */
-    @media (max-width: 960px) {
-      .main-layout { grid-template-columns: 1fr; }
-      .ranking-card { position: static; }
-    }
-
-    @media (max-width: 760px) {
-      .admin-panel { grid-template-columns: 1fr; }
-      .hero { flex-direction: column; align-items: flex-start; }
-    }
-
-    @media (max-width: 560px) {
-      h1 { font-size: 2rem; }
-      #buttons { grid-template-columns: 1fr 1fr; }
-    }
+    @media (max-width:980px) { .main-layout{grid-template-columns:1fr;} .ranking-card{position:static;} }
+    @media (max-width:720px) { .admin-panel{grid-template-columns:1fr; border-left-width:4px;} .hero{flex-direction:column;align-items:flex-start;} }
+    @media (max-width:520px) { #buttons{grid-template-columns:1fr 1fr;} h1{font-size:2rem;} }
   </style>
 </head>
 <body>
-  <div class="wrap">
+<div class="blob-bottom"></div>
+<div class="wrap">
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="hero-text">
-        <div class="eyebrow">Real-time idea voting</div>
-        <h1>未来アイディア<br>投票</h1>
-      </div>
-      <div class="stats-bar">
-        <div class="stat-pill">
-          <span class="num" id="ideaTotal">0</span>
-          <span class="label">アイディア</span>
-        </div>
-        <div class="stat-pill">
-          <span class="num" id="voteTotal">0</span>
-          <span class="label">総投票数</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ADMIN PANEL -->
-    <section class="admin-panel">
-      <div class="field">
-        <label for="presenterName">発表者名</label>
-        <input id="presenterName" type="text" placeholder="例：秋山" />
-      </div>
-      <div class="field">
-        <label for="ideaName">アイデア名</label>
-        <input id="ideaName" type="text" placeholder="例：AIによる在庫自動最適化" />
-      </div>
-      <button id="addIdeas" class="primary-btn" type="button">追加</button>
-    </section>
-
-    <!-- MAIN LAYOUT -->
-    <div class="main-layout">
-
-      <!-- RANKING (left / sticky) -->
-      <div class="ranking-card">
-        <div class="ranking-header">
-          <div class="ranking-title">ランキング</div>
-          <div class="ranking-sub">Top 5</div>
-        </div>
-        <div id="rankingList">
-          <div class="ranking-empty">まだアイディアがありません</div>
-        </div>
-      </div>
-
-      <!-- IDEA CARDS (right) -->
-      <div id="buttons"></div>
-
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="eyebrow"><span class="eyebrow-dot"></span>Real-time idea voting</div>
+      <h1>未来アイディア<br>投票</h1>
     </div>
+    <div class="stats-bar">
+      <div class="stat-pill"><span class="stat-num" id="ideaTotal">0</span><span class="stat-label">アイディア</span></div>
+      <div class="stat-pill"><span class="stat-num" id="voteTotal">0</span><span class="stat-label">総投票数</span></div>
+    </div>
+  </section>
+
+  <!-- ADMIN PANEL -->
+  <section class="admin-panel">
+    <div class="field">
+      <label for="presenterName">発表者名</label>
+      <input id="presenterName" type="text" placeholder="例：秋山" />
+    </div>
+    <div class="field">
+      <label for="ideaName">アイデア名</label>
+      <input id="ideaName" type="text" placeholder="例：AIによる在庫自動最適化" />
+    </div>
+    <button id="addIdeas" class="primary-btn" type="button">追加</button>
+  </section>
+
+  <!-- MAIN -->
+  <div class="main-layout">
+    <div class="ranking-card">
+      <div class="ranking-top-bar"></div>
+      <div class="ranking-inner">
+        <div class="ranking-header">
+          <span class="ranking-title">ランキング</span>
+          <span class="ranking-sub">Top 5</span>
+        </div>
+        <div id="rankingList"><div class="ranking-empty">まだアイディアがありません</div></div>
+      </div>
+    </div>
+    <div id="buttons"></div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      query,
-      orderBy,
-      onSnapshot,
-      doc,
-      updateDoc,
-      deleteDoc,
-      increment,
-      serverTimestamp,
-      writeBatch,
-      getDocs
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+</div>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore, collection, query, orderBy,
+    onSnapshot, doc, updateDoc, deleteDoc,
+    increment, serverTimestamp, writeBatch, getDocs
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDdJKKyT22hY8vrONa3uSd6frElr5GFDc8",
-      authDomain: "nissin-idea-vote.firebaseapp.com",
-      projectId: "nissin-idea-vote",
-      storageBucket: "nissin-idea-vote.firebasestorage.app",
-      messagingSenderId: "68393992909",
-      appId: "1:68393992909:web:afb807bff2b6959153df84",
-      measurementId: "G-TZJ94F994R"
-    };
+  const app = initializeApp({
+    apiKey: "AIzaSyDdJKKyT22hY8vrONa3uSd6frElr5GFDc8",
+    authDomain: "nissin-idea-vote.firebaseapp.com",
+    projectId: "nissin-idea-vote",
+    storageBucket: "nissin-idea-vote.firebasestorage.app",
+    messagingSenderId: "68393992909",
+    appId: "1:68393992909:web:afb807bff2b6959153df84"
+  });
+  const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
+  const voteOptionsRef   = collection(db, "voteOptions");
+  const voteOptionsQuery = query(voteOptionsRef, orderBy("order", "asc"));
 
-    const buttonsDiv        = document.getElementById("buttons");
-    const rankingListEl     = document.getElementById("rankingList");
-    const presenterNameInput = document.getElementById("presenterName");
-    const ideaNameInput     = document.getElementById("ideaName");
-    const addIdeasBtn       = document.getElementById("addIdeas");
-    const ideaTotalEl       = document.getElementById("ideaTotal");
-    const voteTotalEl       = document.getElementById("voteTotal");
+  const $ideaTotal      = document.getElementById("ideaTotal");
+  const $voteTotal      = document.getElementById("voteTotal");
+  const $rankingList    = document.getElementById("rankingList");
+  const $buttons        = document.getElementById("buttons");
+  const $presenterInput = document.getElementById("presenterName");
+  const $ideaNameInput  = document.getElementById("ideaName");
+  const $addBtn         = document.getElementById("addIdeas");
 
-    const voteOptionsRef   = collection(db, "voteOptions");
-    const voteOptionsQuery = query(voteOptionsRef, orderBy("order", "asc"));
+  let prevRankMap  = {};
+  let prevCountMap = {};
 
-    // ── previous ranking state for delta calc ──
-    let prevRanking = [];   // [{ id, rank }]
-    let prevCounts  = {};   // { id: count }
+  async function addIdea() {
+    const presenter = $presenterInput.value.trim();
+    const name      = $ideaNameInput.value.trim();
+    let ok = true;
+    if (!presenter) { $presenterInput.classList.add("error"); setTimeout(()=>$presenterInput.classList.remove("error"),1200); ok=false; }
+    if (!name)      { $ideaNameInput.classList.add("error");  setTimeout(()=>$ideaNameInput.classList.remove("error"),1200);  ok=false; }
+    if (!ok) return;
 
-    // ── ADD ──
-    async function addIdea() {
-      const presenter = presenterNameInput.value.trim();
-      const name      = ideaNameInput.value.trim();
+    $addBtn.disabled = true;
+    try {
+      const snap  = await getDocs(voteOptionsQuery);
+      const batch = writeBatch(db);
+      batch.set(doc(voteOptionsRef), {
+        presenter, ideaName: name,
+        label: `${presenter}「${name}」`,
+        count: 0, order: snap.size,
+        createdAt: serverTimestamp()
+      });
+      await batch.commit();
+      $presenterInput.value = "";
+      $ideaNameInput.value  = "";
+      $presenterInput.focus();
+    } catch(e) { alert("追加に失敗しました。"); }
+    finally { $addBtn.disabled = false; }
+  }
 
-      if (!presenter) {
-        presenterNameInput.focus();
-        presenterNameInput.style.borderColor = "#d71920";
-        setTimeout(() => presenterNameInput.style.borderColor = "", 1200);
-        return;
-      }
-      if (!name) {
-        ideaNameInput.focus();
-        ideaNameInput.style.borderColor = "#d71920";
-        setTimeout(() => ideaNameInput.style.borderColor = "", 1200);
-        return;
-      }
-
-      addIdeasBtn.disabled = true;
-      try {
-        const snapshot = await getDocs(voteOptionsQuery);
-        const baseOrder = snapshot.size;
-        const batch = writeBatch(db);
-        const newRef = doc(voteOptionsRef);
-        batch.set(newRef, {
-          label: `${presenter}「${name}」`,
-          presenter,
-          ideaName: name,
-          count: 0,
-          order: baseOrder,
-          createdAt: serverTimestamp()
-        });
-        await batch.commit();
-        presenterNameInput.value = "";
-        ideaNameInput.value = "";
-        presenterNameInput.focus();
-      } catch (e) {
-        console.error(e);
-        alert("追加に失敗しました。");
-      } finally {
-        addIdeasBtn.disabled = false;
-      }
+  function updateRanking(ideas) {
+    if (!ideas.length) {
+      $rankingList.innerHTML = '<div class="ranking-empty">まだアイディアがありません</div>';
+      prevRankMap = {};
+      return;
     }
 
-    // ── RANKING ──
-    function buildRankingRows(ideas) {
-      if (!ideas.length) {
-        rankingListEl.innerHTML = '<div class="ranking-empty">まだアイディアがありません</div>';
-        prevRanking = [];
-        return;
+    const sorted = [...ideas]
+      .sort((a,b) => (b.count - a.count) || (a.order - b.order))
+      .slice(0, 5);
+
+    const maxVotes   = sorted[0].count || 1;
+    const newRankMap = {};
+    sorted.forEach((idea,i) => { newRankMap[idea.id] = i+1; });
+
+    $rankingList.innerHTML = "";
+
+    sorted.forEach((idea, index) => {
+      const rank     = index + 1;
+      const prevRank = prevRankMap[idea.id];
+      const isNew    = prevRank === undefined;
+      const moved    = !isNew && prevRank !== rank;
+      const voted    = prevCountMap[idea.id] !== undefined && prevCountMap[idea.id] < idea.count;
+      const pct      = Math.round((idea.count / maxVotes) * 100);
+      const name     = idea.ideaName ? `${idea.presenter}「${idea.ideaName}」` : idea.label;
+
+      let dc="same", dt="−";
+      if (isNew) { dc="new"; dt="NEW"; }
+      else {
+        const diff = prevRank - rank;
+        if (diff>0)      { dc="up";   dt=`▲${diff}`; }
+        else if (diff<0) { dc="down"; dt=`▼${Math.abs(diff)}`; }
       }
 
-      const ranked = [...ideas]
-        .sort((a, b) => (b.count - a.count) || (a.order - b.order))
-        .slice(0, 5);
+      const item = document.createElement("div");
+      item.className = "ranking-item" + (rank===1 ? " is-top" : "");
+      item.dataset.id = idea.id;
+      item.style.setProperty("--pct", pct+"%");
+      item.innerHTML = `
+        <div class="ranking-rank">${rank}位</div>
+        <div class="ranking-name">${name}</div>
+        <div class="ranking-right">
+          <div class="ranking-votes">${idea.count}票</div>
+          <div class="rank-delta ${dc}">${dt}</div>
+        </div>`;
+      $rankingList.appendChild(item);
 
-      const maxVotes = ranked[0]?.count || 1;
-
-      // map id -> previous rank
-      const prevRankMap = {};
-      prevRanking.forEach(r => { prevRankMap[r.id] = r.rank; });
-
-      // keep or update DOM nodes
-      const existingItems = {};
-      rankingListEl.querySelectorAll(".ranking-item[data-id]").forEach(el => {
-        existingItems[el.dataset.id] = el;
-      });
-
-      const newOrder = [];
-
-      ranked.forEach((idea, index) => {
-        const rank      = index + 1;
-        const prevRank  = prevRankMap[idea.id];
-        const prevCount = prevCounts[idea.id] ?? null;
-        const isNew     = prevRank === undefined;
-        const moved     = !isNew && prevRank !== rank;
-        const voted     = !isNew && prevCount !== null && idea.count > prevCount;
-
-        newOrder.push({ id: idea.id, rank });
-
-        let item = existingItems[idea.id];
-
-        if (!item) {
-          item = document.createElement("div");
-          item.className = "ranking-item";
-          item.dataset.id = idea.id;
-          item.innerHTML = `
-            <div class="ranking-rank"></div>
-            <div class="ranking-name"></div>
-            <div class="ranking-right">
-              <div class="ranking-votes"></div>
-              <div class="rank-delta"></div>
-            </div>
-          `;
-        }
-
-        // update content
-        item.querySelector(".ranking-rank").textContent = rank + "位";
-        item.querySelector(".ranking-name").textContent = idea.ideaName
-          ? `${idea.presenter}「${idea.ideaName}」`
-          : idea.label;
-
-        const votesEl = item.querySelector(".ranking-votes");
-        votesEl.textContent = `${idea.count} 票`;
-
-        // progress bar width
-        item.style.setProperty("--pct", `${Math.round((idea.count / maxVotes) * 100)}%`);
-
-        // top styling
-        item.classList.toggle("is-top", rank === 1);
-
-        // delta badge
-        const deltaEl = item.querySelector(".rank-delta");
-        if (isNew) {
-          deltaEl.textContent = "NEW";
-          deltaEl.className = "rank-delta new";
-        } else {
-          const diff = prevRank - rank;
-          if (diff > 0) {
-            deltaEl.textContent = `▲${diff}`;
-            deltaEl.className = "rank-delta up";
-          } else if (diff < 0) {
-            deltaEl.textContent = `▼${Math.abs(diff)}`;
-            deltaEl.className = "rank-delta down";
-          } else {
-            deltaEl.textContent = "−";
-            deltaEl.className = "rank-delta same";
-          }
-        }
-
-        // animations
-        if (moved || isNew) {
-          item.classList.remove("animate");
-          void item.offsetWidth; // reflow
+      if (moved || isNew) {
+        requestAnimationFrame(() => {
           item.classList.add("animate");
-        }
-        if (voted) {
-          item.classList.remove("flash");
-          void item.offsetWidth;
-          item.classList.add("flash");
-          setTimeout(() => item.classList.remove("flash"), 700);
-        }
-
-        delete existingItems[idea.id];
-      });
-
-      // remove items no longer in top5
-      Object.values(existingItems).forEach(el => el.remove());
-
-      // re-order DOM to match ranked order
-      newOrder.forEach(({ id }) => {
-        const el = rankingListEl.querySelector(`[data-id="${id}"]`);
-        if (el) rankingListEl.appendChild(el);
-        else {
-          // freshly created — append
-        }
-      });
-
-      // also append brand-new items (not yet in DOM)
-      ranked.forEach(idea => {
-        if (!rankingListEl.querySelector(`[data-id="${idea.id}"]`)) {
-          const dummy = document.createElement("div");
-          // already built above in item var, so find it by scanning
-        }
-      });
-
-      // ensure every item is in DOM
-      ranked.forEach(idea => {
-        if (!rankingListEl.querySelector(`[data-id="${idea.id}"]`)) {
-          const item2 = existingItems[idea.id];
-          if (item2) rankingListEl.appendChild(item2);
-        }
-      });
-
-      prevRanking = newOrder;
-    }
-
-    // ── IDEA CARDS ──
-    function renderIdeas(docs) {
-      let totalVotes = 0;
-      const ideas = [];
-
-      docs.forEach(ideaDoc => {
-        const data  = ideaDoc.data();
-        const count = data.count || 0;
-        totalVotes += count;
-        ideas.push({
-          id: ideaDoc.id,
-          label: data.label,
-          presenter: data.presenter || "",
-          ideaName: data.ideaName || "",
-          count,
-          order: data.order || 0
+          item.addEventListener("animationend", ()=>item.classList.remove("animate"), {once:true});
         });
-      });
+      }
+      if (voted) {
+        requestAnimationFrame(() => {
+          item.classList.add("flash");
+          item.addEventListener("animationend", ()=>item.classList.remove("flash"), {once:true});
+        });
+      }
+    });
 
-      ideaTotalEl.textContent = docs.length;
-      voteTotalEl.textContent = totalVotes;
+    prevRankMap = newRankMap;
+  }
 
-      // update ranking (needs prevCounts still set to old values first)
-      buildRankingRows(ideas);
+  function updateCards(ideas) {
+    const existing = {};
+    $buttons.querySelectorAll(".idea-card[data-id]").forEach(el => { existing[el.dataset.id] = el; });
 
-      // update prevCounts
-      ideas.forEach(idea => { prevCounts[idea.id] = idea.count; });
+    ideas.forEach(idea => {
+      let card = existing[idea.id];
 
-      // existing cards
-      const existingCards = {};
-      buttonsDiv.querySelectorAll(".idea-card[data-id]").forEach(el => {
-        existingCards[el.dataset.id] = el;
-      });
+      if (!card) {
+        card = document.createElement("div");
+        card.className = "idea-card";
+        card.dataset.id = idea.id;
 
-      ideas.forEach(idea => {
-        let card = existingCards[idea.id];
+        const top = document.createElement("div");
+        top.className = "idea-card-top";
 
-        if (!card) {
-          // create
-          card = document.createElement("div");
-          card.className = "idea-card";
-          card.dataset.id = idea.id;
+        const badge = document.createElement("div");
+        badge.className = "idea-presenter";
+        badge.textContent = idea.presenter || "—";
 
-          const top = document.createElement("div");
-          top.className = "idea-card-top";
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.title = "削除";
+        delBtn.textContent = "✕";
+        delBtn.addEventListener("click", async () => {
+          const label = idea.ideaName || idea.label;
+          if (!confirm(`「${label}」を削除しますか？`)) return;
+          try { await deleteDoc(doc(db, "voteOptions", idea.id)); }
+          catch { alert("削除に失敗しました。"); }
+        });
 
-          const presenterBadge = document.createElement("div");
-          presenterBadge.className = "idea-presenter";
-          presenterBadge.textContent = idea.presenter || "idea";
+        top.appendChild(badge);
+        top.appendChild(delBtn);
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className = "delete-btn";
-          deleteBtn.title = "削除";
-          deleteBtn.textContent = "✕";
-          deleteBtn.addEventListener("click", async () => {
-            if (!confirm(`「${idea.ideaName || idea.label}」を削除しますか？`)) return;
-            try {
-              await deleteDoc(doc(db, "voteOptions", idea.id));
-            } catch (e) {
-              alert("削除に失敗しました。");
-            }
-          });
+        const nameEl = document.createElement("div");
+        nameEl.className = "idea-name";
+        nameEl.textContent = idea.ideaName || idea.label;
 
-          top.appendChild(presenterBadge);
-          top.appendChild(deleteBtn);
+        const voteBtn = document.createElement("button");
+        voteBtn.className = "vote-btn";
+        voteBtn.type = "button";
+        voteBtn.innerHTML = `<span style="font-size:.8rem">▲</span> この案に投票`;
+        voteBtn.addEventListener("click", async () => {
+          voteBtn.disabled = true;
+          try { await updateDoc(doc(db, "voteOptions", idea.id), { count: increment(1) }); }
+          catch { alert("投票に失敗しました。"); }
+          finally { voteBtn.disabled = false; }
+        });
 
-          const nameEl = document.createElement("div");
-          nameEl.className = "idea-name";
-          nameEl.textContent = idea.ideaName || idea.label;
+        const countWrap = document.createElement("div");
+        countWrap.className = "count-wrap";
+        countWrap.innerHTML = `<span class="count">${idea.count}</span><span class="count-label">votes</span>`;
 
-          const voteBtn = document.createElement("button");
-          voteBtn.className = "vote-btn";
-          voteBtn.type = "button";
-          voteBtn.innerHTML = `<span class="btn-icon">▲</span> この案に投票`;
-
-          voteBtn.addEventListener("click", async () => {
-            voteBtn.disabled = true;
-            try {
-              await updateDoc(doc(db, "voteOptions", idea.id), {
-                count: increment(1)
-              });
-            } catch (e) {
-              alert("投票に失敗しました。");
-            } finally {
-              voteBtn.disabled = false;
-            }
-          });
-
-          const countWrap = document.createElement("div");
-          countWrap.className = "count-wrap";
-          countWrap.innerHTML = `<span class="count">${idea.count}</span><span class="count-label">votes</span>`;
-
-          card.appendChild(top);
-          card.appendChild(nameEl);
-          card.appendChild(voteBtn);
-          card.appendChild(countWrap);
-          buttonsDiv.appendChild(card);
-
-          delete existingCards[idea.id];
-        } else {
-          // update count with bump animation
-          const countEl = card.querySelector(".count");
-          const oldCount = parseInt(countEl.textContent, 10);
-          if (idea.count !== oldCount) {
-            countEl.textContent = idea.count;
-            countEl.classList.remove("bump");
-            void countEl.offsetWidth;
-            countEl.classList.add("bump");
-          }
-          delete existingCards[idea.id];
+        card.appendChild(top);
+        card.appendChild(nameEl);
+        card.appendChild(voteBtn);
+        card.appendChild(countWrap);
+        $buttons.appendChild(card);
+      } else {
+        const countEl = card.querySelector(".count");
+        if (parseInt(countEl.textContent, 10) !== idea.count) {
+          countEl.textContent = idea.count;
+          countEl.classList.remove("bump");
+          void countEl.offsetWidth;
+          countEl.classList.add("bump");
         }
-      });
-
-      // remove deleted cards
-      Object.values(existingCards).forEach(el => el.remove());
-    }
-
-    // ── LISTENERS ──
-    onSnapshot(voteOptionsQuery, snapshot => {
-      renderIdeas(snapshot.docs);
+        delete existing[idea.id];
+      }
     });
 
-    addIdeasBtn.addEventListener("click", addIdea);
-    [presenterNameInput, ideaNameInput].forEach(input => {
-      input.addEventListener("keydown", e => {
-        if (e.key === "Enter") { e.preventDefault(); addIdea(); }
+    Object.values(existing).forEach(el => el.remove());
+  }
+
+  onSnapshot(voteOptionsQuery, snapshot => {
+    let totalVotes = 0;
+    const ideas = [];
+
+    snapshot.forEach(d => {
+      const data  = d.data();
+      const count = data.count || 0;
+      totalVotes += count;
+      ideas.push({
+        id: d.id,
+        presenter: data.presenter || "",
+        ideaName:  data.ideaName  || "",
+        label:     data.label     || "",
+        count,
+        order: data.order ?? 0
       });
     });
-  </script>
+
+    $ideaTotal.textContent = ideas.length;
+    $voteTotal.textContent = totalVotes;
+
+    updateRanking(ideas);
+    ideas.forEach(idea => { prevCountMap[idea.id] = idea.count; });
+    updateCards(ideas);
+  });
+
+  $addBtn.addEventListener("click", addIdea);
+  [$presenterInput, $ideaNameInput].forEach(el => {
+    el.addEventListener("keydown", e => { if (e.key==="Enter") { e.preventDefault(); addIdea(); } });
+  });
+</script>
 </body>
 </html>
