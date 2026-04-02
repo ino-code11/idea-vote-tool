@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>未来アイディア投票</title>
+  <title>リアルアイディア投票</title>
   <style>
     :root {
       --panel: rgba(255, 255, 255, 0.92);
@@ -166,16 +166,16 @@
       transform: translateY(-1px);
     }
 
-    .summary {
-      display: flex;
+    .dashboard {
+      display: grid;
+      grid-template-columns: 220px 220px 1fr;
       gap: 14px;
-      flex-wrap: wrap;
-      margin: 0 0 20px;
+      margin: 0 0 24px;
+      align-items: stretch;
     }
 
-    .summary-card {
-      flex: 1 1 180px;
-      min-width: 180px;
+    .summary-card,
+    .ranking-card {
       background: var(--panel);
       border: 2px solid var(--line);
       border-radius: 18px;
@@ -184,7 +184,8 @@
       text-align: left;
     }
 
-    .summary-card .label {
+    .summary-card .label,
+    .ranking-title {
       font-size: 0.82rem;
       color: var(--muted);
       margin-bottom: 8px;
@@ -195,6 +196,65 @@
       font-weight: 800;
       line-height: 1;
       word-break: break-word;
+    }
+
+    .ranking-card {
+      min-height: 100%;
+    }
+
+    .ranking-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .ranking-item {
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1.5px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: #fff;
+      animation: rankPop 0.28s ease;
+    }
+
+    .ranking-rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      border: 1.5px solid var(--line);
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
+    .ranking-item.is-top .ranking-rank {
+      background: linear-gradient(135deg, var(--red) 0%, var(--red2) 100%);
+      color: #fff;
+      border-color: var(--line);
+    }
+
+    .ranking-name {
+      font-weight: 800;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .ranking-votes {
+      font-weight: 800;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .ranking-empty {
+      color: var(--muted);
+      font-size: 0.95rem;
+      padding: 8px 0;
     }
 
     #buttons {
@@ -297,6 +357,23 @@
       cursor: default;
     }
 
+    @keyframes rankPop {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
     @media (max-width: 900px) {
       .admin-panel {
         grid-template-columns: 1fr;
@@ -309,7 +386,9 @@
       }
 
       .hero,
-      .admin-panel {
+      .admin-panel,
+      .summary-card,
+      .ranking-card {
         padding: 16px;
       }
 
@@ -319,6 +398,10 @@
 
       .summary-card .value {
         font-size: 1.5rem;
+      }
+
+      .ranking-item {
+        grid-template-columns: 46px 1fr auto;
       }
     }
   </style>
@@ -346,18 +429,22 @@
       <button id="addIdeas" class="primary-btn" type="button">まとめて追加</button>
     </section>
 
-    <section class="summary">
+    <section class="dashboard">
       <div class="summary-card">
         <div class="label">登録済みアイディア数</div>
         <div class="value" id="ideaTotal">0</div>
       </div>
+
       <div class="summary-card">
         <div class="label">総投票数</div>
         <div class="value" id="voteTotal">0</div>
       </div>
-      <div class="summary-card">
-        <div class="label">現在トップ</div>
-        <div class="value" id="topIdea">-</div>
+
+      <div class="ranking-card">
+        <div class="ranking-title">現在のランキング Top 5</div>
+        <div class="ranking-list" id="rankingList">
+          <div class="ranking-empty">まだアイディアがありません</div>
+        </div>
       </div>
     </section>
 
@@ -395,12 +482,12 @@
     const db = getFirestore(app);
 
     const buttonsDiv = document.getElementById("buttons");
+    const rankingListEl = document.getElementById("rankingList");
     const presenterNameInput = document.getElementById("presenterName");
     const ideaCountInput = document.getElementById("ideaCount");
     const addIdeasBtn = document.getElementById("addIdeas");
     const ideaTotalEl = document.getElementById("ideaTotal");
     const voteTotalEl = document.getElementById("voteTotal");
-    const topIdeaEl = document.getElementById("topIdea");
 
     const voteOptionsRef = collection(db, "voteOptions");
     const voteOptionsQuery = query(voteOptionsRef, orderBy("order", "asc"));
@@ -412,6 +499,48 @@
 
     function createIdeaLabels(baseName, count) {
       return Array.from({ length: count }, (_, index) => `${baseName}${toCircledNumber(index + 1)}`);
+    }
+
+    function buildRankingRows(ideas) {
+      rankingListEl.innerHTML = "";
+
+      if (!ideas.length) {
+        rankingListEl.innerHTML = '<div class="ranking-empty">まだアイディアがありません</div>';
+        return;
+      }
+
+      const ranked = [...ideas]
+        .sort((a, b) => {
+          const voteDiff = (b.count || 0) - (a.count || 0);
+          if (voteDiff !== 0) return voteDiff;
+          return (a.order || 0) - (b.order || 0);
+        })
+        .slice(0, 5);
+
+      ranked.forEach((idea, index) => {
+        const item = document.createElement("div");
+        item.className = "ranking-item";
+        if (index === 0) {
+          item.classList.add("is-top");
+        }
+
+        const rank = document.createElement("div");
+        rank.className = "ranking-rank";
+        rank.textContent = `${index + 1}位`;
+
+        const name = document.createElement("div");
+        name.className = "ranking-name";
+        name.textContent = idea.label;
+
+        const votes = document.createElement("div");
+        votes.className = "ranking-votes";
+        votes.textContent = `${idea.count || 0}票`;
+
+        item.appendChild(rank);
+        item.appendChild(name);
+        item.appendChild(votes);
+        rankingListEl.appendChild(item);
+      });
     }
 
     async function addIdeas() {
@@ -465,16 +594,20 @@
       buttonsDiv.innerHTML = "";
 
       let totalVotes = 0;
-      let topIdea = null;
+      const ideas = [];
 
       docs.forEach((ideaDoc) => {
         const data = ideaDoc.data();
         const count = data.count || 0;
         totalVotes += count;
 
-        if (!topIdea || count > topIdea.count) {
-          topIdea = { label: data.label, count: count };
-        }
+        ideas.push({
+          id: ideaDoc.id,
+          label: data.label,
+          presenter: data.presenter,
+          count: count,
+          order: data.order || 0
+        });
 
         const card = document.createElement("div");
         card.className = "idea-card";
@@ -529,7 +662,7 @@
 
       ideaTotalEl.textContent = docs.length;
       voteTotalEl.textContent = totalVotes;
-      topIdeaEl.textContent = topIdea ? `${topIdea.label} (${topIdea.count})` : "-";
+      buildRankingRows(ideas);
     }
 
     onSnapshot(voteOptionsQuery, (snapshot) => {
