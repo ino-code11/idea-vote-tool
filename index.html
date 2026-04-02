@@ -6,7 +6,6 @@
   <title>リアルアイディア投票</title>
   <style>
     :root {
-      --bg: #fbfbfb;
       --panel: rgba(255, 255, 255, 0.92);
       --line: #111111;
       --muted: #666666;
@@ -300,64 +299,8 @@
       cursor: default;
     }
 
-    .bottom-panels {
-      display: grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 18px;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 2px solid var(--line);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: var(--shadow);
-      text-align: left;
-    }
-
-    .panel h2 {
-      margin: 0 0 14px;
-      font-size: 1.15rem;
-    }
-
-    #log {
-      min-height: 120px;
-      max-height: 280px;
-      overflow-y: auto;
-      padding-right: 6px;
-    }
-
-    .bubble {
-      display: inline-block;
-      margin: 0 8px 10px 0;
-      padding: 10px 14px;
-      background: #fff;
-      border: 1.5px solid var(--line);
-      border-radius: 999px;
-      animation: pop 0.25s ease;
-      font-size: 0.93rem;
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 0.94rem;
-      line-height: 1.7;
-    }
-
-    @keyframes pop {
-      from {
-        opacity: 0;
-        transform: translateY(8px) scale(0.96);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
     @media (max-width: 900px) {
-      .admin-panel,
-      .bottom-panels {
+      .admin-panel {
         grid-template-columns: 1fr;
       }
     }
@@ -368,8 +311,7 @@
       }
 
       .hero,
-      .admin-panel,
-      .panel {
+      .admin-panel {
         padding: 16px;
       }
 
@@ -423,22 +365,6 @@
     </section>
 
     <div id="buttons"></div>
-
-    <section class="bottom-panels">
-      <div class="panel">
-        <h2>リアルタイムログ</h2>
-        <div id="log"></div>
-      </div>
-      <div class="panel">
-        <h2>この構成のポイント</h2>
-        <div class="muted">
-          ・固定人数配列ではなく、Firestore の「voteOptions」コレクションからボタンを描画<br />
-          ・その場で追加しても全端末に即反映<br />
-          ・色は白ベース + 黒縁で統一し、アクセントだけ赤を使用<br />
-          ・ログは画面表示用として残し、票数リセット時も消えません
-        </div>
-      </div>
-    </section>
   </div>
 
   <script type="module">
@@ -446,16 +372,17 @@
     import {
       getFirestore,
       collection,
-      addDoc,
-      getDocs,
-      onSnapshot,
       query,
       orderBy,
+      onSnapshot,
       updateDoc,
       doc,
       increment,
       serverTimestamp,
-      writeBatch
+      writeBatch,
+      getDocs,
+      doc as firestoreDoc,
+      setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -472,7 +399,6 @@
     const db = getFirestore(app);
 
     const buttonsDiv = document.getElementById("buttons");
-    const logDiv = document.getElementById("log");
     const presenterNameInput = document.getElementById("presenterName");
     const ideaCountInput = document.getElementById("ideaCount");
     const addIdeasBtn = document.getElementById("addIdeas");
@@ -491,14 +417,6 @@
 
     function createIdeaLabels(baseName, count) {
       return Array.from({ length: count }, (_, index) => `${baseName}${toCircledNumber(index + 1)}`);
-    }
-
-    function appendLog(text) {
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.textContent = text;
-      logDiv.appendChild(bubble);
-      logDiv.scrollTop = logDiv.scrollHeight;
     }
 
     async function addIdeas() {
@@ -523,17 +441,20 @@
         const snapshot = await getDocs(voteOptionsQuery);
         let baseOrder = snapshot.size;
         const labels = createIdeaLabels(presenter, ideaCount);
+        const batch = writeBatch(db);
 
-        for (const label of labels) {
-          await addDoc(voteOptionsRef, {
+        labels.forEach((label) => {
+          const newRef = firestoreDoc(voteOptionsRef);
+          batch.set(newRef, {
             label: label,
             presenter: presenter,
             count: 0,
             order: baseOrder++,
             createdAt: serverTimestamp()
           });
-          appendLog(`追加: ${label}`);
-        }
+        });
+
+        await batch.commit();
 
         presenterNameInput.value = "";
         ideaCountInput.value = "1";
@@ -576,7 +497,6 @@
             await updateDoc(doc(db, "voteOptions", ideaDoc.id), {
               count: increment(1)
             });
-            appendLog(`投票: ${data.label}`);
           } catch (error) {
             console.error(error);
             alert("投票に失敗しました。");
@@ -647,7 +567,6 @@
         });
 
         await batch.commit();
-        appendLog("票数をリセットしました");
       } catch (error) {
         console.error(error);
         alert("リセットに失敗しました。");
