@@ -4,451 +4,576 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>リアルアイディア投票</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --panel: rgba(255, 255, 255, 0.92);
-      --line: #111111;
-      --muted: #666666;
       --red: #d71920;
       --red2: #ef3340;
-      --red-soft: rgba(215, 25, 32, 0.08);
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-      --radius: 22px;
+      --red-glow: rgba(215, 25, 32, 0.18);
+      --line: #111111;
+      --muted: #666666;
+      --panel: rgba(255,255,255,0.94);
+      --shadow: 0 8px 28px rgba(0,0,0,0.06);
+      --radius: 20px;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'Noto Sans JP', sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      margin: 0;
-      font-family: "Hiragino Sans", "Yu Gothic", sans-serif;
+      font-family: var(--font-body);
       color: var(--line);
-      background:
-        radial-gradient(circle at top right, rgba(215, 25, 32, 0.08), transparent 28%),
-        linear-gradient(135deg, #ffffff 0%, #fff8f8 40%, #fcfcfc 100%);
+      background: #fafaf8;
       min-height: 100vh;
       overflow-x: hidden;
     }
 
+    /* grid bg */
     body::before {
       content: "";
-      position: fixed;
-      inset: 0;
-      background:
-        linear-gradient(90deg, transparent 0%, transparent 49.5%, rgba(215, 25, 32, 0.06) 50%, transparent 50.5%, transparent 100%),
-        linear-gradient(0deg, transparent 0%, transparent 49.5%, rgba(0,0,0,0.03) 50%, transparent 50.5%, transparent 100%);
-      background-size: 110px 110px;
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
       pointer-events: none;
-      opacity: 0.45;
+      z-index: 0;
     }
 
     .wrap {
-      max-width: 1240px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 24px 18px 48px;
+      padding: 28px 20px 56px;
       position: relative;
       z-index: 1;
     }
 
+    /* ── HERO ── */
     .hero {
-      background: var(--panel);
-      border: 2px solid var(--line);
-      border-radius: 32px;
-      padding: 28px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(10px);
-      text-align: left;
-      margin-bottom: 22px;
-      position: relative;
-      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
     }
 
-    .hero::after {
-      content: "";
-      position: absolute;
-      width: 220px;
-      height: 220px;
-      right: -70px;
-      top: -90px;
-      border-radius: 50%;
-      border: 1px solid rgba(215, 25, 32, 0.18);
-      background: radial-gradient(circle, rgba(215, 25, 32, 0.10), transparent 70%);
-    }
+    .hero-text {}
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.88rem;
-      letter-spacing: 0.08em;
+      gap: 6px;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      border: 1px solid var(--line);
+      border: 1.5px solid var(--line);
       border-radius: 999px;
-      padding: 8px 12px;
+      padding: 5px 12px;
       background: #fff;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
+      font-family: var(--font-display);
+    }
+
+    .eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 7px; height: 7px;
+      background: var(--red);
+      border-radius: 50%;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.7); }
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 4vw, 3.3rem);
-      line-height: 1.05;
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: 1.02;
+      letter-spacing: -0.02em;
     }
 
-    .hero p {
-      margin: 0;
-      color: var(--muted);
+    /* ── STATS BAR (compact) ── */
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1.5px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .stat-pill .num {
+      font-family: var(--font-display);
       font-size: 1rem;
-      line-height: 1.7;
-      max-width: 760px;
+      font-weight: 800;
     }
 
+    .stat-pill .label {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 400;
+    }
+
+    /* ── ADMIN PANEL ── */
     .admin-panel {
       display: grid;
-      grid-template-columns: 1.4fr 0.8fr auto;
-      gap: 12px;
+      grid-template-columns: 1fr 1.4fr auto;
+      gap: 10px;
       align-items: end;
+      background: var(--panel);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      backdrop-filter: blur(8px);
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    .field input {
+      width: 100%;
+      height: 44px;
+      border: 2px solid var(--line);
+      border-radius: 12px;
+      padding: 0 14px;
+      font-size: 0.96rem;
+      font-family: var(--font-body);
+      background: #fff;
+      outline: none;
+      transition: box-shadow 0.15s;
+    }
+
+    .field input:focus {
+      box-shadow: 0 0 0 4px var(--red-glow);
+    }
+
+    .primary-btn {
+      height: 44px;
+      padding: 0 20px;
+      border-radius: 12px;
+      border: 2px solid var(--line);
+      font-size: 0.92rem;
+      font-weight: 700;
+      font-family: var(--font-body);
+      background: var(--line);
+      color: #fff;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.12s, opacity 0.12s;
+    }
+
+    .primary-btn:hover { transform: translateY(-1px); opacity: 0.88; }
+    .primary-btn:active { transform: scale(0.98); }
+    .primary-btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
+
+    /* ── MAIN LAYOUT ── */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    /* ── RANKING CARD ── */
+    .ranking-card {
       background: var(--panel);
       border: 2px solid var(--line);
       border-radius: var(--radius);
       padding: 18px;
       box-shadow: var(--shadow);
-      margin-bottom: 24px;
+      position: sticky;
+      top: 20px;
     }
 
-    .field {
-      text-align: left;
+    .ranking-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
     }
 
-    .field label {
-      display: block;
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .field input {
-      width: 100%;
-      height: 48px;
-      border: 2px solid var(--line);
-      border-radius: 14px;
-      padding: 0 14px;
-      font-size: 1rem;
-      background: #fff;
-      outline: none;
-    }
-
-    .field input:focus {
-      box-shadow: 0 0 0 4px var(--red-soft);
-    }
-
-    .primary-btn,
-    .vote-btn {
-      cursor: pointer;
-      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, opacity 0.14s ease;
-    }
-
-    .primary-btn {
-      height: 48px;
-      padding: 0 18px;
-      border-radius: 14px;
-      border: 2px solid var(--line);
-      font-size: 0.98rem;
-      font-weight: 700;
-      background: #fff;
-      color: var(--line);
-      white-space: nowrap;
-    }
-
-    .primary-btn:hover,
-    .vote-btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .dashboard {
-      display: grid;
-      grid-template-columns: 220px 220px 1fr;
-      gap: 14px;
-      margin: 0 0 24px;
-      align-items: stretch;
-    }
-
-    .summary-card,
-    .ranking-card {
-      background: var(--panel);
-      border: 2px solid var(--line);
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-      text-align: left;
-    }
-
-    .summary-card .label,
     .ranking-title {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .summary-card .value {
-      font-size: 1.8rem;
+      font-family: var(--font-display);
+      font-size: 1rem;
       font-weight: 800;
-      line-height: 1;
-      word-break: break-word;
+      letter-spacing: -0.01em;
     }
 
-    .ranking-card {
-      min-height: 100%;
+    .ranking-sub {
+      font-size: 0.74rem;
+      color: var(--muted);
     }
 
-    .ranking-list {
+    /* ranking list */
+    #rankingList {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 8px;
+      gap: 8px;
+      min-height: 60px;
     }
 
     .ranking-item {
       display: grid;
-      grid-template-columns: 52px 1fr auto;
+      grid-template-columns: 40px 1fr auto;
       gap: 10px;
       align-items: center;
-      border: 1.5px solid var(--line);
-      border-radius: 14px;
+      border: 1.5px solid #e8e8e4;
+      border-radius: 12px;
       padding: 10px 12px;
       background: #fff;
-      animation: rankPop 0.28s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* progress bar behind */
+    .ranking-item::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      background: rgba(215,25,32,0.05);
+      width: var(--pct, 0%);
+      transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+
+    .ranking-item.is-top {
+      border-color: var(--red);
+      background: #fff8f8;
+    }
+
+    .ranking-item.is-top::before {
+      background: rgba(215,25,32,0.08);
     }
 
     .ranking-rank {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
-      height: 32px;
-      border: 1.5px solid var(--line);
+      width: 32px; height: 32px;
+      border: 1.5px solid #e0e0d8;
       border-radius: 999px;
+      font-family: var(--font-display);
       font-weight: 800;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       background: #fff;
+      position: relative;
+      z-index: 1;
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
     }
 
-    .ranking-item.is-top .ranking-rank {
-      background: linear-gradient(135deg, var(--red) 0%, var(--red2) 100%);
+    .is-top .ranking-rank {
+      background: var(--red);
       color: #fff;
-      border-color: var(--line);
+      border-color: var(--red);
     }
 
     .ranking-name {
-      font-weight: 800;
+      font-weight: 700;
+      font-size: 0.9rem;
       line-height: 1.35;
       word-break: break-word;
+      position: relative;
+      z-index: 1;
+    }
+
+    .ranking-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 3px;
+      position: relative;
+      z-index: 1;
     }
 
     .ranking-votes {
+      font-family: var(--font-display);
       font-weight: 800;
-      font-size: 0.95rem;
+      font-size: 1rem;
+    }
+
+    /* ── RANK CHANGE BADGE ── */
+    .rank-delta {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 999px;
+      line-height: 1;
       white-space: nowrap;
+    }
+
+    .rank-delta.up   { background: #e8f5e9; color: #2e7d32; }
+    .rank-delta.down { background: #fff3e0; color: #e65100; }
+    .rank-delta.new  { background: #e3f2fd; color: #1565c0; }
+    .rank-delta.same { background: #f5f5f5; color: #888; }
+
+    /* item animation on rank change */
+    @keyframes rankBump {
+      0%   { transform: translateX(-6px); opacity: 0.6; }
+      60%  { transform: translateX(3px); }
+      100% { transform: translateX(0);   opacity: 1; }
+    }
+
+    .ranking-item.animate {
+      animation: rankBump 0.42s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes voteFlash {
+      0%  { background: rgba(215,25,32,0.18); }
+      100%{ background: transparent; }
+    }
+
+    .ranking-item.flash {
+      animation: voteFlash 0.6s ease-out forwards;
     }
 
     .ranking-empty {
       color: var(--muted);
-      font-size: 0.95rem;
-      padding: 8px 0;
+      font-size: 0.9rem;
+      padding: 12px 0;
+      text-align: center;
     }
 
+    /* ── IDEA CARDS ── */
     #buttons {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 18px;
-      margin-bottom: 28px;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px;
     }
 
     .idea-card {
       background: var(--panel);
       border: 2px solid var(--line);
-      border-radius: 24px;
-      padding: 18px;
-      box-shadow: var(--shadow);
+      border-radius: 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      min-height: 210px;
+      gap: 12px;
+      min-height: 180px;
       position: relative;
       overflow: hidden;
+      transition: transform 0.18s, box-shadow 0.18s;
     }
 
-    .idea-card::before {
-      content: "";
-      position: absolute;
-      inset: auto -40px -40px auto;
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(215, 25, 32, 0.12), transparent 70%);
+    .idea-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.09);
+    }
+
+    .idea-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .idea-presenter {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: #f0f0ec;
+      border-radius: 999px;
+      padding: 3px 10px;
     }
 
     .idea-name {
-      font-size: 1.18rem;
-      font-weight: 800;
+      font-size: 1.05rem;
+      font-weight: 900;
       line-height: 1.4;
       word-break: break-word;
-      text-align: left;
-      position: relative;
-      z-index: 1;
-    }
-
-    .vote-btn {
-      width: 100%;
-      padding: 16px 14px;
-      font-size: 1.1rem;
-      font-weight: 800;
-      border: 2px solid var(--line);
-      border-radius: 16px;
-      background: linear-gradient(135deg, var(--red) 0%, var(--red2) 100%);
-      color: #fff;
-      box-shadow: 0 10px 22px rgba(215, 25, 32, 0.22);
-      position: relative;
-      z-index: 1;
-    }
-
-    .vote-btn:active {
-      transform: scale(0.98);
-    }
-
-    .vote-btn:disabled,
-    .primary-btn:disabled {
-      opacity: 0.6;
-      cursor: wait;
-      transform: none;
     }
 
     .count-wrap {
       margin-top: auto;
-      position: relative;
-      z-index: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
     }
 
     .count {
-      font-size: 2.1rem;
+      font-family: var(--font-display);
+      font-size: 2.2rem;
       font-weight: 800;
       line-height: 1;
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .count.bump {
+      animation: countBump 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes countBump {
+      0%  { transform: scale(1); }
+      50% { transform: scale(1.4); color: var(--red); }
+      100%{ transform: scale(1); }
     }
 
     .count-label {
       color: var(--muted);
-      font-size: 0.85rem;
-      margin-top: 4px;
+      font-size: 0.8rem;
     }
 
-    .card-actions {
+    .vote-btn {
+      width: 100%;
+      padding: 13px 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font-body);
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--line);
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s, transform 0.12s, box-shadow 0.18s;
       display: flex;
-      justify-content: flex-end;
-      position: relative;
-      z-index: 1;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
-    .mini-btn {
-      border: 1.5px solid var(--line);
-      background: transparent;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 0.82rem;
-      cursor: default;
+    .vote-btn:hover {
+      background: var(--line);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
-    @keyframes rankPop {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    .vote-btn:active { transform: scale(0.98); }
+
+    .vote-btn:disabled {
+      opacity: 0.5;
+      cursor: wait;
+      transform: none;
     }
 
-    @media (max-width: 980px) {
-      .dashboard {
-        grid-template-columns: 1fr;
-      }
+    /* voted state */
+    .vote-btn.voted {
+      background: linear-gradient(135deg, var(--red), var(--red2));
+      color: #fff;
+      border-color: var(--red);
+      box-shadow: 0 6px 18px rgba(215,25,32,0.28);
+      pointer-events: none;
     }
 
-    @media (max-width: 900px) {
-      .admin-panel {
-        grid-template-columns: 1fr;
-      }
+    .vote-btn .btn-icon {
+      font-size: 1rem;
+      transition: transform 0.2s;
     }
 
-    @media (max-width: 640px) {
-      .wrap {
-        padding: 16px 14px 32px;
-      }
+    .vote-btn:hover .btn-icon { transform: scale(1.2); }
 
-      .hero,
-      .admin-panel,
-      .summary-card,
-      .ranking-card {
-        padding: 16px;
-      }
+    /* card delete btn */
+    .delete-btn {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid #e0e0d8;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
 
-      h1 {
-        font-size: 2rem;
-      }
+    .delete-btn:hover {
+      background: #fff0f0;
+      color: var(--red);
+      border-color: var(--red);
+    }
 
-      .summary-card .value {
-        font-size: 1.5rem;
-      }
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .main-layout { grid-template-columns: 1fr; }
+      .ranking-card { position: static; }
+    }
 
-      .ranking-item {
-        grid-template-columns: 46px 1fr auto;
-      }
+    @media (max-width: 760px) {
+      .admin-panel { grid-template-columns: 1fr; }
+      .hero { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 560px) {
+      h1 { font-size: 2rem; }
+      #buttons { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
+
+    <!-- HERO -->
     <section class="hero">
-      <div class="eyebrow">Real-time idea voting</div>
-      <h1>未来アイディア<br />リアルタイム投票</h1>
-      <p>
-        発表を聞きながら、その場で投票ボタンを増やせる構成です。<br />
-        例：秋山さんが3案出したら「秋山①」「秋山②」「秋山③」を一括追加できます。
-      </p>
+      <div class="hero-text">
+        <div class="eyebrow">Real-time idea voting</div>
+        <h1>未来アイディア<br>投票</h1>
+      </div>
+      <div class="stats-bar">
+        <div class="stat-pill">
+          <span class="num" id="ideaTotal">0</span>
+          <span class="label">アイディア</span>
+        </div>
+        <div class="stat-pill">
+          <span class="num" id="voteTotal">0</span>
+          <span class="label">総投票数</span>
+        </div>
+      </div>
     </section>
 
+    <!-- ADMIN PANEL -->
     <section class="admin-panel">
       <div class="field">
         <label for="presenterName">発表者名</label>
         <input id="presenterName" type="text" placeholder="例：秋山" />
       </div>
       <div class="field">
-        <label for="ideaCount">案の数</label>
-        <input id="ideaCount" type="number" min="1" max="20" value="1" />
+        <label for="ideaName">アイデア名</label>
+        <input id="ideaName" type="text" placeholder="例：AIによる在庫自動最適化" />
       </div>
-      <button id="addIdeas" class="primary-btn" type="button">まとめて追加</button>
+      <button id="addIdeas" class="primary-btn" type="button">追加</button>
     </section>
 
-    <section class="dashboard">
-      <div class="summary-card">
-        <div class="label">登録済みアイディア数</div>
-        <div class="value" id="ideaTotal">0</div>
-      </div>
+    <!-- MAIN LAYOUT -->
+    <div class="main-layout">
 
-      <div class="summary-card">
-        <div class="label">総投票数</div>
-        <div class="value" id="voteTotal">0</div>
-      </div>
-
+      <!-- RANKING (left / sticky) -->
       <div class="ranking-card">
-        <div class="ranking-title">現在のランキング Top 5</div>
-        <div class="ranking-list" id="rankingList">
+        <div class="ranking-header">
+          <div class="ranking-title">ランキング</div>
+          <div class="ranking-sub">Top 5</div>
+        </div>
+        <div id="rankingList">
           <div class="ranking-empty">まだアイディアがありません</div>
         </div>
       </div>
-    </section>
 
-    <div id="buttons"></div>
+      <!-- IDEA CARDS (right) -->
+      <div id="buttons"></div>
+
+    </div>
   </div>
 
   <script type="module">
@@ -459,13 +584,13 @@
       query,
       orderBy,
       onSnapshot,
-      updateDoc,
       doc,
+      updateDoc,
+      deleteDoc,
       increment,
       serverTimestamp,
       writeBatch,
-      getDocs,
-      doc as firestoreDoc
+      getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -479,210 +604,327 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db  = getFirestore(app);
 
-    const buttonsDiv = document.getElementById("buttons");
-    const rankingListEl = document.getElementById("rankingList");
+    const buttonsDiv        = document.getElementById("buttons");
+    const rankingListEl     = document.getElementById("rankingList");
     const presenterNameInput = document.getElementById("presenterName");
-    const ideaCountInput = document.getElementById("ideaCount");
-    const addIdeasBtn = document.getElementById("addIdeas");
-    const ideaTotalEl = document.getElementById("ideaTotal");
-    const voteTotalEl = document.getElementById("voteTotal");
+    const ideaNameInput     = document.getElementById("ideaName");
+    const addIdeasBtn       = document.getElementById("addIdeas");
+    const ideaTotalEl       = document.getElementById("ideaTotal");
+    const voteTotalEl       = document.getElementById("voteTotal");
 
-    const voteOptionsRef = collection(db, "voteOptions");
+    const voteOptionsRef   = collection(db, "voteOptions");
     const voteOptionsQuery = query(voteOptionsRef, orderBy("order", "asc"));
 
-    function toCircledNumber(num) {
-      const circled = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳"];
-      return circled[num - 1] || `-${num}`;
-    }
+    // ── previous ranking state for delta calc ──
+    let prevRanking = [];   // [{ id, rank }]
+    let prevCounts  = {};   // { id: count }
 
-    function createIdeaLabels(baseName, count) {
-      return Array.from({ length: count }, (_, index) => `${baseName}${toCircledNumber(index + 1)}`);
-    }
-
-    function buildRankingRows(ideas) {
-      rankingListEl.innerHTML = "";
-
-      if (!ideas.length) {
-        rankingListEl.innerHTML = '<div class="ranking-empty">まだアイディアがありません</div>';
-        return;
-      }
-
-      const ranked = [...ideas]
-        .sort((a, b) => {
-          const voteDiff = (b.count || 0) - (a.count || 0);
-          if (voteDiff !== 0) return voteDiff;
-          return (a.order || 0) - (b.order || 0);
-        })
-        .slice(0, 5);
-
-      ranked.forEach((idea, index) => {
-        const item = document.createElement("div");
-        item.className = "ranking-item";
-        if (index === 0) {
-          item.classList.add("is-top");
-        }
-
-        const rank = document.createElement("div");
-        rank.className = "ranking-rank";
-        rank.textContent = `${index + 1}位`;
-
-        const name = document.createElement("div");
-        name.className = "ranking-name";
-        name.textContent = idea.label;
-
-        const votes = document.createElement("div");
-        votes.className = "ranking-votes";
-        votes.textContent = `${idea.count || 0}票`;
-
-        item.appendChild(rank);
-        item.appendChild(name);
-        item.appendChild(votes);
-        rankingListEl.appendChild(item);
-      });
-    }
-
-    async function addIdeas() {
+    // ── ADD ──
+    async function addIdea() {
       const presenter = presenterNameInput.value.trim();
-      const ideaCount = Number(ideaCountInput.value || 0);
+      const name      = ideaNameInput.value.trim();
 
       if (!presenter) {
-        alert("発表者名を入力してください。");
         presenterNameInput.focus();
+        presenterNameInput.style.borderColor = "#d71920";
+        setTimeout(() => presenterNameInput.style.borderColor = "", 1200);
         return;
       }
-
-      if (!ideaCount || ideaCount < 1) {
-        alert("案の数は1以上にしてください。");
-        ideaCountInput.focus();
+      if (!name) {
+        ideaNameInput.focus();
+        ideaNameInput.style.borderColor = "#d71920";
+        setTimeout(() => ideaNameInput.style.borderColor = "", 1200);
         return;
       }
 
       addIdeasBtn.disabled = true;
-
       try {
         const snapshot = await getDocs(voteOptionsQuery);
-        let baseOrder = snapshot.size;
-        const labels = createIdeaLabels(presenter, ideaCount);
+        const baseOrder = snapshot.size;
         const batch = writeBatch(db);
-
-        labels.forEach((label) => {
-          const newRef = firestoreDoc(voteOptionsRef);
-          batch.set(newRef, {
-            label: label,
-            presenter: presenter,
-            count: 0,
-            order: baseOrder++,
-            createdAt: serverTimestamp()
-          });
+        const newRef = doc(voteOptionsRef);
+        batch.set(newRef, {
+          label: `${presenter}「${name}」`,
+          presenter,
+          ideaName: name,
+          count: 0,
+          order: baseOrder,
+          createdAt: serverTimestamp()
         });
-
         await batch.commit();
-
         presenterNameInput.value = "";
-        ideaCountInput.value = "1";
-      } catch (error) {
-        console.error(error);
-        alert("アイディア追加に失敗しました。");
+        ideaNameInput.value = "";
+        presenterNameInput.focus();
+      } catch (e) {
+        console.error(e);
+        alert("追加に失敗しました。");
       } finally {
         addIdeasBtn.disabled = false;
       }
     }
 
-    function renderIdeas(docs) {
-      buttonsDiv.innerHTML = "";
+    // ── RANKING ──
+    function buildRankingRows(ideas) {
+      if (!ideas.length) {
+        rankingListEl.innerHTML = '<div class="ranking-empty">まだアイディアがありません</div>';
+        prevRanking = [];
+        return;
+      }
 
+      const ranked = [...ideas]
+        .sort((a, b) => (b.count - a.count) || (a.order - b.order))
+        .slice(0, 5);
+
+      const maxVotes = ranked[0]?.count || 1;
+
+      // map id -> previous rank
+      const prevRankMap = {};
+      prevRanking.forEach(r => { prevRankMap[r.id] = r.rank; });
+
+      // keep or update DOM nodes
+      const existingItems = {};
+      rankingListEl.querySelectorAll(".ranking-item[data-id]").forEach(el => {
+        existingItems[el.dataset.id] = el;
+      });
+
+      const newOrder = [];
+
+      ranked.forEach((idea, index) => {
+        const rank      = index + 1;
+        const prevRank  = prevRankMap[idea.id];
+        const prevCount = prevCounts[idea.id] ?? null;
+        const isNew     = prevRank === undefined;
+        const moved     = !isNew && prevRank !== rank;
+        const voted     = !isNew && prevCount !== null && idea.count > prevCount;
+
+        newOrder.push({ id: idea.id, rank });
+
+        let item = existingItems[idea.id];
+
+        if (!item) {
+          item = document.createElement("div");
+          item.className = "ranking-item";
+          item.dataset.id = idea.id;
+          item.innerHTML = `
+            <div class="ranking-rank"></div>
+            <div class="ranking-name"></div>
+            <div class="ranking-right">
+              <div class="ranking-votes"></div>
+              <div class="rank-delta"></div>
+            </div>
+          `;
+        }
+
+        // update content
+        item.querySelector(".ranking-rank").textContent = rank + "位";
+        item.querySelector(".ranking-name").textContent = idea.ideaName
+          ? `${idea.presenter}「${idea.ideaName}」`
+          : idea.label;
+
+        const votesEl = item.querySelector(".ranking-votes");
+        votesEl.textContent = `${idea.count} 票`;
+
+        // progress bar width
+        item.style.setProperty("--pct", `${Math.round((idea.count / maxVotes) * 100)}%`);
+
+        // top styling
+        item.classList.toggle("is-top", rank === 1);
+
+        // delta badge
+        const deltaEl = item.querySelector(".rank-delta");
+        if (isNew) {
+          deltaEl.textContent = "NEW";
+          deltaEl.className = "rank-delta new";
+        } else {
+          const diff = prevRank - rank;
+          if (diff > 0) {
+            deltaEl.textContent = `▲${diff}`;
+            deltaEl.className = "rank-delta up";
+          } else if (diff < 0) {
+            deltaEl.textContent = `▼${Math.abs(diff)}`;
+            deltaEl.className = "rank-delta down";
+          } else {
+            deltaEl.textContent = "−";
+            deltaEl.className = "rank-delta same";
+          }
+        }
+
+        // animations
+        if (moved || isNew) {
+          item.classList.remove("animate");
+          void item.offsetWidth; // reflow
+          item.classList.add("animate");
+        }
+        if (voted) {
+          item.classList.remove("flash");
+          void item.offsetWidth;
+          item.classList.add("flash");
+          setTimeout(() => item.classList.remove("flash"), 700);
+        }
+
+        delete existingItems[idea.id];
+      });
+
+      // remove items no longer in top5
+      Object.values(existingItems).forEach(el => el.remove());
+
+      // re-order DOM to match ranked order
+      newOrder.forEach(({ id }) => {
+        const el = rankingListEl.querySelector(`[data-id="${id}"]`);
+        if (el) rankingListEl.appendChild(el);
+        else {
+          // freshly created — append
+        }
+      });
+
+      // also append brand-new items (not yet in DOM)
+      ranked.forEach(idea => {
+        if (!rankingListEl.querySelector(`[data-id="${idea.id}"]`)) {
+          const dummy = document.createElement("div");
+          // already built above in item var, so find it by scanning
+        }
+      });
+
+      // ensure every item is in DOM
+      ranked.forEach(idea => {
+        if (!rankingListEl.querySelector(`[data-id="${idea.id}"]`)) {
+          const item2 = existingItems[idea.id];
+          if (item2) rankingListEl.appendChild(item2);
+        }
+      });
+
+      prevRanking = newOrder;
+    }
+
+    // ── IDEA CARDS ──
+    function renderIdeas(docs) {
       let totalVotes = 0;
       const ideas = [];
 
-      docs.forEach((ideaDoc) => {
-        const data = ideaDoc.data();
+      docs.forEach(ideaDoc => {
+        const data  = ideaDoc.data();
         const count = data.count || 0;
         totalVotes += count;
-
         ideas.push({
           id: ideaDoc.id,
           label: data.label,
-          presenter: data.presenter,
-          count: count,
+          presenter: data.presenter || "",
+          ideaName: data.ideaName || "",
+          count,
           order: data.order || 0
         });
-
-        const card = document.createElement("div");
-        card.className = "idea-card";
-
-        const name = document.createElement("div");
-        name.className = "idea-name";
-        name.textContent = data.label;
-
-        const voteBtn = document.createElement("button");
-        voteBtn.className = "vote-btn";
-        voteBtn.type = "button";
-        voteBtn.textContent = "この案に投票";
-
-        voteBtn.addEventListener("click", async () => {
-          voteBtn.disabled = true;
-          try {
-            await updateDoc(doc(db, "voteOptions", ideaDoc.id), {
-              count: increment(1)
-            });
-          } catch (error) {
-            console.error(error);
-            alert("投票に失敗しました。");
-          } finally {
-            voteBtn.disabled = false;
-          }
-        });
-
-        const countWrap = document.createElement("div");
-        countWrap.className = "count-wrap";
-        countWrap.innerHTML = `
-          <div>
-            <div class="count">${count}</div>
-            <div class="count-label">votes</div>
-          </div>
-        `;
-
-        const actions = document.createElement("div");
-        actions.className = "card-actions";
-
-        const miniInfo = document.createElement("button");
-        miniInfo.className = "mini-btn";
-        miniInfo.type = "button";
-        miniInfo.textContent = data.presenter || "idea";
-
-        actions.appendChild(miniInfo);
-        card.appendChild(name);
-        card.appendChild(voteBtn);
-        card.appendChild(countWrap);
-        card.appendChild(actions);
-        buttonsDiv.appendChild(card);
       });
 
       ideaTotalEl.textContent = docs.length;
       voteTotalEl.textContent = totalVotes;
+
+      // update ranking (needs prevCounts still set to old values first)
       buildRankingRows(ideas);
+
+      // update prevCounts
+      ideas.forEach(idea => { prevCounts[idea.id] = idea.count; });
+
+      // existing cards
+      const existingCards = {};
+      buttonsDiv.querySelectorAll(".idea-card[data-id]").forEach(el => {
+        existingCards[el.dataset.id] = el;
+      });
+
+      ideas.forEach(idea => {
+        let card = existingCards[idea.id];
+
+        if (!card) {
+          // create
+          card = document.createElement("div");
+          card.className = "idea-card";
+          card.dataset.id = idea.id;
+
+          const top = document.createElement("div");
+          top.className = "idea-card-top";
+
+          const presenterBadge = document.createElement("div");
+          presenterBadge.className = "idea-presenter";
+          presenterBadge.textContent = idea.presenter || "idea";
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "delete-btn";
+          deleteBtn.title = "削除";
+          deleteBtn.textContent = "✕";
+          deleteBtn.addEventListener("click", async () => {
+            if (!confirm(`「${idea.ideaName || idea.label}」を削除しますか？`)) return;
+            try {
+              await deleteDoc(doc(db, "voteOptions", idea.id));
+            } catch (e) {
+              alert("削除に失敗しました。");
+            }
+          });
+
+          top.appendChild(presenterBadge);
+          top.appendChild(deleteBtn);
+
+          const nameEl = document.createElement("div");
+          nameEl.className = "idea-name";
+          nameEl.textContent = idea.ideaName || idea.label;
+
+          const voteBtn = document.createElement("button");
+          voteBtn.className = "vote-btn";
+          voteBtn.type = "button";
+          voteBtn.innerHTML = `<span class="btn-icon">▲</span> この案に投票`;
+
+          voteBtn.addEventListener("click", async () => {
+            voteBtn.disabled = true;
+            try {
+              await updateDoc(doc(db, "voteOptions", idea.id), {
+                count: increment(1)
+              });
+            } catch (e) {
+              alert("投票に失敗しました。");
+            } finally {
+              voteBtn.disabled = false;
+            }
+          });
+
+          const countWrap = document.createElement("div");
+          countWrap.className = "count-wrap";
+          countWrap.innerHTML = `<span class="count">${idea.count}</span><span class="count-label">votes</span>`;
+
+          card.appendChild(top);
+          card.appendChild(nameEl);
+          card.appendChild(voteBtn);
+          card.appendChild(countWrap);
+          buttonsDiv.appendChild(card);
+
+          delete existingCards[idea.id];
+        } else {
+          // update count with bump animation
+          const countEl = card.querySelector(".count");
+          const oldCount = parseInt(countEl.textContent, 10);
+          if (idea.count !== oldCount) {
+            countEl.textContent = idea.count;
+            countEl.classList.remove("bump");
+            void countEl.offsetWidth;
+            countEl.classList.add("bump");
+          }
+          delete existingCards[idea.id];
+        }
+      });
+
+      // remove deleted cards
+      Object.values(existingCards).forEach(el => el.remove());
     }
 
-    onSnapshot(voteOptionsQuery, (snapshot) => {
+    // ── LISTENERS ──
+    onSnapshot(voteOptionsQuery, snapshot => {
       renderIdeas(snapshot.docs);
     });
 
-    addIdeasBtn.addEventListener("click", addIdeas);
-
-    presenterNameInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        addIdeas();
-      }
-    });
-
-    ideaCountInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        addIdeas();
-      }
+    addIdeasBtn.addEventListener("click", addIdea);
+    [presenterNameInput, ideaNameInput].forEach(input => {
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") { e.preventDefault(); addIdea(); }
+      });
     });
   </script>
 </body>
