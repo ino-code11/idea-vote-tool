@@ -415,14 +415,22 @@
   </div>
 
   <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    onSnapshot,
+    query,
+    orderBy,
+    updateDoc,
+    doc,
+    increment,
+    serverTimestamp,
+    writeBatch
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
     apiKey: "AIzaSyDdJKKyT22hY8vrONa3uSd6frElr5GFDc8",
     authDomain: "nissin-idea-vote.firebaseapp.com",
@@ -433,9 +441,182 @@
     measurementId: "G-TZJ94F994R"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  const buttonsDiv = document.getElementById("buttons");
+  const logDiv = document.getElementById("log");
+  const presenterNameInput = document.getElementById("presenterName");
+  const ideaCountInput = document.getElementById("ideaCount");
+  const addIdeasBtn = document.getElementById("addIdeas");
+  const resetBtn = document.getElementById("reset");
+  const ideaTotalEl = document.getElementById("ideaTotal");
+  const voteTotalEl = document.getElementById("voteTotal");
+  const topIdeaEl = document.getElementById("topIdea");
+
+  const voteOptionsRef = collection(db, "voteOptions");
+  const voteOptionsQuery = query(voteOptionsRef, orderBy("order", "asc"));
+
+  function toCircledNumber(num) {
+    const circled = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳"];
+    return circled[num - 1] || `-${num}`;
+  }
+
+  function createIdeaLabels(baseName, count) {
+    return Array.from({ length: count }, (_, index) => `${baseName}${toCircledNumber(index + 1)}`);
+  }
+
+  function appendLog(text) {
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+    logDiv.appendChild(bubble);
+    logDiv.scrollTop = logDiv.scrollHeight;
+  }
+
+  async function addIdeas() {
+    const presenter = presenterNameInput.value.trim();
+    const ideaCount = Number(ideaCountInput.value || 0);
+
+    if (!presenter) {
+      alert("発表者名を入力してください。");
+      presenterNameInput.focus();
+      return;
+    }
+
+    if (!ideaCount || ideaCount < 1) {
+      alert("案の数は1以上にしてください。");
+      ideaCountInput.focus();
+      return;
+    }
+
+    addIdeasBtn.disabled = true;
+
+    try {
+      const snapshot = await getDocs(voteOptionsQuery);
+      let baseOrder = snapshot.size;
+      const labels = createIdeaLabels(presenter, ideaCount);
+
+      for (const label of labels) {
+        await addDoc(voteOptionsRef, {
+          label: label,
+          presenter: presenter,
+          count: 0,
+          order: baseOrder++,
+          createdAt: serverTimestamp()
+        });
+        appendLog(`追加: ${label}`);
+      }
+
+      presenterNameInput.value = "";
+      ideaCountInput.value = "1";
+    } catch (error) {
+      console.error(error);
+      alert("アイディア追加に失敗しました。");
+    } finally {
+      addIdeasBtn.disabled = false;
+    }
+  }
+
+  function renderIdeas(docs) {
+    buttonsDiv.innerHTML = "";
+    let totalVotes = 0;
+    let topIdea = null;
+
+    docs.forEach((ideaDoc) => {
+      const data = ideaDoc.data();
+      const count = data.count || 0;
+      totalVotes += count;
+
+      if (!topIdea || count > topIdea.count) {
+        topIdea = {
+          label: data.label,
+          count: count
+        };
+      }
+
+      const card = document.createElement("div");
+      card.className = "idea-card";
+
+      const name = document.createElement("div");
+      name.className = "idea-name";
+      name.textContent = data.label;
+
+      const voteBtn = document.createElement("button");
+      voteBtn.className = "vote-btn";
+      voteBtn.textContent = "この案に投票";
+      voteBtn.addEventListener("click", async () => {
+        try {
+          await updateDoc(doc(db, "voteOptions", ideaDoc.id), {
+            count: increment(1)
+          });
+          appendLog(`投票: ${data.label}`);
+        } catch (error) {
+          console.error(error);
+          alert("投票に失敗しました。");
+        }
+      });
+
+      const countWrap = document.createElement("div");
+      countWrap.className = "count-wrap";
+      countWrap.innerHTML = `
+        <strong>${count}</strong>
+        <span>votes</span>
+      `;
+
+      const actions = document.createElement("div");
+      actions.className = "card-actions";
+
+      const miniInfo = document.createElement("button");
+      miniInfo.className = "mini-btn";
+      miniInfo.type = "button";
+      miniInfo.textContent = data.presenter || "idea";
+
+      actions.appendChild(miniInfo);
+      card.appendChild(name);
+      card.appendChild(voteBtn);
+      card.appendChild(countWrap);
+      card.appendChild(actions);
+      buttonsDiv.appendChild(card);
+    });
+
+    ideaTotalEl.textContent = docs.length;
+    voteTotalEl.textContent = totalVotes;
+    topIdeaEl.textContent = topIdea ? `${topIdea.label} (${topIdea.count})` : "-";
+  }
+
+  onSnapshot(voteOptionsQuery, (snapshot) => {
+    renderIdeas(snapshot.docs);
+  });
+
+  addIdeasBtn.addEventListener("click", addIdeas);
+
+  presenterNameInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") addIdeas();
+  });
+
+  ideaCountInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") addIdeas();
+  });
+
+  resetBtn.addEventListener("click", async () => {
+    if (!confirm("票数だけを0に戻します。よろしいですか？")) return;
+
+    try {
+      const snapshot = await getDocs(voteOptionsQuery);
+      const batch = writeBatch(db);
+
+      snapshot.forEach((item) => {
+        batch.update(item.ref, { count: 0 });
+      });
+
+      await batch.commit();
+      appendLog("票数をリセットしました");
+    } catch (error) {
+      console.error(error);
+      alert("リセットに失敗しました。");
+    }
+  });
 </script>
 
     const buttonsDiv = document.getElementById("buttons");
