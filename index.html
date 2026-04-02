@@ -7,7 +7,7 @@
   <style>
     :root {
       --bg: #fbfbfb;
-      --panel: rgba(255, 255, 255, 0.9);
+      --panel: rgba(255, 255, 255, 0.92);
       --line: #111111;
       --muted: #666666;
       --red: #d71920;
@@ -16,7 +16,9 @@
       --radius: 22px;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -202,6 +204,7 @@
       font-size: 1.8rem;
       font-weight: 800;
       line-height: 1;
+      word-break: break-word;
     }
 
     #buttons {
@@ -241,6 +244,8 @@
       line-height: 1.4;
       word-break: break-word;
       text-align: left;
+      position: relative;
+      z-index: 1;
     }
 
     .vote-btn {
@@ -252,7 +257,9 @@
       border-radius: 16px;
       background: #fff;
       color: var(--line);
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+      position: relative;
+      z-index: 1;
     }
 
     .vote-btn:active {
@@ -260,11 +267,9 @@
     }
 
     .count-wrap {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 10px;
       margin-top: auto;
+      position: relative;
+      z-index: 1;
     }
 
     .count {
@@ -276,11 +281,14 @@
     .count-label {
       color: var(--muted);
       font-size: 0.85rem;
+      margin-top: 4px;
     }
 
     .card-actions {
       display: flex;
       justify-content: flex-end;
+      position: relative;
+      z-index: 1;
     }
 
     .mini-btn {
@@ -289,7 +297,7 @@
       border-radius: 999px;
       padding: 6px 10px;
       font-size: 0.82rem;
-      cursor: pointer;
+      cursor: default;
     }
 
     .bottom-panels {
@@ -337,8 +345,14 @@
     }
 
     @keyframes pop {
-      from { opacity: 0; transform: translateY(8px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     @media (max-width: 900px) {
@@ -349,10 +363,23 @@
     }
 
     @media (max-width: 640px) {
-      .wrap { padding: 16px 14px 32px; }
-      .hero, .admin-panel, .panel { padding: 16px; }
-      h1 { font-size: 2rem; }
-      .summary-card .value { font-size: 1.5rem; }
+      .wrap {
+        padding: 16px 14px 32px;
+      }
+
+      .hero,
+      .admin-panel,
+      .panel {
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .summary-card .value {
+        font-size: 1.5rem;
+      }
     }
   </style>
 </head>
@@ -376,8 +403,8 @@
         <label for="ideaCount">案の数</label>
         <input id="ideaCount" type="number" min="1" max="20" value="1" />
       </div>
-      <button id="addIdeas" class="primary-btn">まとめて追加</button>
-      <button id="reset" class="secondary-btn">票数だけリセット</button>
+      <button id="addIdeas" class="primary-btn" type="button">まとめて追加</button>
+      <button id="reset" class="secondary-btn" type="button">票数だけリセット</button>
     </section>
 
     <section class="summary">
@@ -405,7 +432,7 @@
       <div class="panel">
         <h2>この構成のポイント</h2>
         <div class="muted">
-          ・固定人数配列ではなく、Firestoreの「voteOptions」コレクションからボタンを描画<br />
+          ・固定人数配列ではなく、Firestore の「voteOptions」コレクションからボタンを描画<br />
           ・その場で追加しても全端末に即反映<br />
           ・色は白ベース + 黒縁で統一し、アクセントだけ赤を使用<br />
           ・ログは画面表示用として残し、票数リセット時も消えません
@@ -415,209 +442,34 @@
   </div>
 
   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    getDocs,
-    onSnapshot,
-    query,
-    orderBy,
-    updateDoc,
-    doc,
-    increment,
-    serverTimestamp,
-    writeBatch
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      onSnapshot,
+      query,
+      orderBy,
+      updateDoc,
+      doc,
+      increment,
+      serverTimestamp,
+      writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDdJKKyT22hY8vrONa3uSd6frElr5GFDc8",
-    authDomain: "nissin-idea-vote.firebaseapp.com",
-    projectId: "nissin-idea-vote",
-    storageBucket: "nissin-idea-vote.firebasestorage.app",
-    messagingSenderId: "68393992909",
-    appId: "1:68393992909:web:afb807bff2b6959153df84",
-    measurementId: "G-TZJ94F994R"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDdJKKyT22hY8vrONa3uSd6frElr5GFDc8",
+      authDomain: "nissin-idea-vote.firebaseapp.com",
+      projectId: "nissin-idea-vote",
+      storageBucket: "nissin-idea-vote.firebasestorage.app",
+      messagingSenderId: "68393992909",
+      appId: "1:68393992909:web:afb807bff2b6959153df84",
+      measurementId: "G-TZJ94F994R"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  const buttonsDiv = document.getElementById("buttons");
-  const logDiv = document.getElementById("log");
-  const presenterNameInput = document.getElementById("presenterName");
-  const ideaCountInput = document.getElementById("ideaCount");
-  const addIdeasBtn = document.getElementById("addIdeas");
-  const resetBtn = document.getElementById("reset");
-  const ideaTotalEl = document.getElementById("ideaTotal");
-  const voteTotalEl = document.getElementById("voteTotal");
-  const topIdeaEl = document.getElementById("topIdea");
-
-  const voteOptionsRef = collection(db, "voteOptions");
-  const voteOptionsQuery = query(voteOptionsRef, orderBy("order", "asc"));
-
-  function toCircledNumber(num) {
-    const circled = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳"];
-    return circled[num - 1] || `-${num}`;
-  }
-
-  function createIdeaLabels(baseName, count) {
-    return Array.from({ length: count }, (_, index) => `${baseName}${toCircledNumber(index + 1)}`);
-  }
-
-  function appendLog(text) {
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.textContent = text;
-    logDiv.appendChild(bubble);
-    logDiv.scrollTop = logDiv.scrollHeight;
-  }
-
-  async function addIdeas() {
-    const presenter = presenterNameInput.value.trim();
-    const ideaCount = Number(ideaCountInput.value || 0);
-
-    if (!presenter) {
-      alert("発表者名を入力してください。");
-      presenterNameInput.focus();
-      return;
-    }
-
-    if (!ideaCount || ideaCount < 1) {
-      alert("案の数は1以上にしてください。");
-      ideaCountInput.focus();
-      return;
-    }
-
-    addIdeasBtn.disabled = true;
-
-    try {
-      const snapshot = await getDocs(voteOptionsQuery);
-      let baseOrder = snapshot.size;
-      const labels = createIdeaLabels(presenter, ideaCount);
-
-      for (const label of labels) {
-        await addDoc(voteOptionsRef, {
-          label: label,
-          presenter: presenter,
-          count: 0,
-          order: baseOrder++,
-          createdAt: serverTimestamp()
-        });
-        appendLog(`追加: ${label}`);
-      }
-
-      presenterNameInput.value = "";
-      ideaCountInput.value = "1";
-    } catch (error) {
-      console.error(error);
-      alert("アイディア追加に失敗しました。");
-    } finally {
-      addIdeasBtn.disabled = false;
-    }
-  }
-
-  function renderIdeas(docs) {
-    buttonsDiv.innerHTML = "";
-    let totalVotes = 0;
-    let topIdea = null;
-
-    docs.forEach((ideaDoc) => {
-      const data = ideaDoc.data();
-      const count = data.count || 0;
-      totalVotes += count;
-
-      if (!topIdea || count > topIdea.count) {
-        topIdea = {
-          label: data.label,
-          count: count
-        };
-      }
-
-      const card = document.createElement("div");
-      card.className = "idea-card";
-
-      const name = document.createElement("div");
-      name.className = "idea-name";
-      name.textContent = data.label;
-
-      const voteBtn = document.createElement("button");
-      voteBtn.className = "vote-btn";
-      voteBtn.textContent = "この案に投票";
-      voteBtn.addEventListener("click", async () => {
-        try {
-          await updateDoc(doc(db, "voteOptions", ideaDoc.id), {
-            count: increment(1)
-          });
-          appendLog(`投票: ${data.label}`);
-        } catch (error) {
-          console.error(error);
-          alert("投票に失敗しました。");
-        }
-      });
-
-      const countWrap = document.createElement("div");
-      countWrap.className = "count-wrap";
-      countWrap.innerHTML = `
-        <strong>${count}</strong>
-        <span>votes</span>
-      `;
-
-      const actions = document.createElement("div");
-      actions.className = "card-actions";
-
-      const miniInfo = document.createElement("button");
-      miniInfo.className = "mini-btn";
-      miniInfo.type = "button";
-      miniInfo.textContent = data.presenter || "idea";
-
-      actions.appendChild(miniInfo);
-      card.appendChild(name);
-      card.appendChild(voteBtn);
-      card.appendChild(countWrap);
-      card.appendChild(actions);
-      buttonsDiv.appendChild(card);
-    });
-
-    ideaTotalEl.textContent = docs.length;
-    voteTotalEl.textContent = totalVotes;
-    topIdeaEl.textContent = topIdea ? `${topIdea.label} (${topIdea.count})` : "-";
-  }
-
-  onSnapshot(voteOptionsQuery, (snapshot) => {
-    renderIdeas(snapshot.docs);
-  });
-
-  addIdeasBtn.addEventListener("click", addIdeas);
-
-  presenterNameInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") addIdeas();
-  });
-
-  ideaCountInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") addIdeas();
-  });
-
-  resetBtn.addEventListener("click", async () => {
-    if (!confirm("票数だけを0に戻します。よろしいですか？")) return;
-
-    try {
-      const snapshot = await getDocs(voteOptionsQuery);
-      const batch = writeBatch(db);
-
-      snapshot.forEach((item) => {
-        batch.update(item.ref, { count: 0 });
-      });
-
-      await batch.commit();
-      appendLog("票数をリセットしました");
-    } catch (error) {
-      console.error(error);
-      alert("リセットに失敗しました。");
-    }
-  });
-</script>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
     const buttonsDiv = document.getElementById("buttons");
     const logDiv = document.getElementById("log");
@@ -625,7 +477,6 @@
     const ideaCountInput = document.getElementById("ideaCount");
     const addIdeasBtn = document.getElementById("addIdeas");
     const resetBtn = document.getElementById("reset");
-
     const ideaTotalEl = document.getElementById("ideaTotal");
     const voteTotalEl = document.getElementById("voteTotal");
     const topIdeaEl = document.getElementById("topIdea");
@@ -633,18 +484,26 @@
     const voteOptionsRef = collection(db, "voteOptions");
     const voteOptionsQuery = query(voteOptionsRef, orderBy("order", "asc"));
 
-    function createIdeaLabels(baseName, count) {
-      return Array.from({ length: count }, (_, index) => `${baseName}${toCircledNumber(index + 1)}`);
-    }
-
     function toCircledNumber(num) {
       const circled = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳"];
       return circled[num - 1] || `-${num}`;
     }
 
+    function createIdeaLabels(baseName, count) {
+      return Array.from({ length: count }, (_, index) => `${baseName}${toCircledNumber(index + 1)}`);
+    }
+
+    function appendLog(text) {
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+      logDiv.appendChild(bubble);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
     async function addIdeas() {
       const presenter = presenterNameInput.value.trim();
-      const count = Number(ideaCountInput.value || 0);
+      const ideaCount = Number(ideaCountInput.value || 0);
 
       if (!presenter) {
         alert("発表者名を入力してください。");
@@ -652,7 +511,7 @@
         return;
       }
 
-      if (!count || count < 1) {
+      if (!ideaCount || ideaCount < 1) {
         alert("案の数は1以上にしてください。");
         ideaCountInput.focus();
         return;
@@ -663,12 +522,12 @@
       try {
         const snapshot = await getDocs(voteOptionsQuery);
         let baseOrder = snapshot.size;
-        const labels = createIdeaLabels(presenter, count);
+        const labels = createIdeaLabels(presenter, ideaCount);
 
         for (const label of labels) {
           await addDoc(voteOptionsRef, {
-            label,
-            presenter,
+            label: label,
+            presenter: presenter,
             count: 0,
             order: baseOrder++,
             createdAt: serverTimestamp()
@@ -677,21 +536,13 @@
         }
 
         presenterNameInput.value = "";
-        ideaCountInput.value = 1;
+        ideaCountInput.value = "1";
       } catch (error) {
         console.error(error);
         alert("アイディア追加に失敗しました。");
       } finally {
         addIdeasBtn.disabled = false;
       }
-    }
-
-    function appendLog(text) {
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.textContent = text;
-      logDiv.appendChild(bubble);
-      logDiv.scrollTop = logDiv.scrollHeight;
     }
 
     function renderIdeas(docs) {
@@ -706,7 +557,7 @@
         totalVotes += count;
 
         if (!topIdea || count > topIdea.count) {
-          topIdea = { label: data.label, count };
+          topIdea = { label: data.label, count: count };
         }
 
         const card = document.createElement("div");
@@ -718,10 +569,13 @@
 
         const voteBtn = document.createElement("button");
         voteBtn.className = "vote-btn";
+        voteBtn.type = "button";
         voteBtn.textContent = "この案に投票";
         voteBtn.addEventListener("click", async () => {
           try {
-            await updateDoc(doc(db, "voteOptions", ideaDoc.id), { count: increment(1) });
+            await updateDoc(doc(db, "voteOptions", ideaDoc.id), {
+              count: increment(1)
+            });
             appendLog(`投票: ${data.label}`);
           } catch (error) {
             console.error(error);
@@ -740,12 +594,13 @@
 
         const actions = document.createElement("div");
         actions.className = "card-actions";
+
         const miniInfo = document.createElement("button");
         miniInfo.className = "mini-btn";
         miniInfo.type = "button";
         miniInfo.textContent = data.presenter || "idea";
-        actions.appendChild(miniInfo);
 
+        actions.appendChild(miniInfo);
         card.appendChild(name);
         card.appendChild(voteBtn);
         card.appendChild(countWrap);
@@ -765,15 +620,23 @@
     addIdeasBtn.addEventListener("click", addIdeas);
 
     presenterNameInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") addIdeas();
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addIdeas();
+      }
     });
 
     ideaCountInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") addIdeas();
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addIdeas();
+      }
     });
 
     resetBtn.addEventListener("click", async () => {
-      if (!confirm("票数だけを0に戻します。よろしいですか？")) return;
+      if (!confirm("票数だけを0に戻します。よろしいですか？")) {
+        return;
+      }
 
       try {
         const snapshot = await getDocs(voteOptionsQuery);
